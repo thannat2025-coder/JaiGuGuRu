@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User account information and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "privacyConsent": { "type": "boolean" },
+        "consentDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLoginAt": { "type": "string", "format": "date-time" },
+        "emergencyContact": { "type": "string" }
+      },
+      "required": ["uid", "displayName", "email"]
+    },
+    "SafetyPlan": {
+      "title": "My Safety Net",
+      "description": "Personalized safety plan for high-risk moments",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "triggers": { "type": "string" },
+        "internalCoping": { "type": "string" },
+        "distractions": { "type": "string" },
+        "trustedContacts": { "type": "array" },
+        "professionalHelp": { "type": "array" },
+        "environmentSafety": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId"]
+    },
+    "ThoughtRecord": {
+      "title": "CBT Thought Record",
+      "description": "Interactive diary for tracking thoughts, emotions, and behaviors",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "situation": { "type": "string" },
+        "thoughts": { "type": "string" },
+        "emotions": { "type": "string" },
+        "distortionTypes": { "type": "array" },
+        "rationalResponse": { "type": "string" },
+        "outcome": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "situation", "thoughts"]
+    },
+    "MoodLog": {
+      "title": "Mood and Emotion Log",
+      "description": "Tracking user emotions and intensity over time",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "mood": { "type": "number", "description": "Intensity rating 1-10" },
+        "emotionType": { "type": "string", "description": "Type of emotion (e.g. Happy, Sad, Anxious)" },
+        "note": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "mood", "emotionType"]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "User notification preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["mood", "goal", "meditation", "custom"] },
+        "time": { "type": "string" },
+        "days": { "type": "array", "items": { "type": "string" } },
+        "enabled": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "type", "time", "days", "enabled"]
+    },
+    "SafetyPlanLog": {
+      "title": "Safety Plan Log",
+      "description": "Logs for daily safety confirmations and safety plan updates",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["safe-confirmed", "plan-updated"] },
+        "note": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "note"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Individual user profiles"
+    },
+    "/users/{userId}/reminders/{reminderId}": {
+      "schema": "Reminder",
+      "description": "Custom reminders for the user"
+    },
+    "/users/{userId}/safetyPlans/{planId}": {
+      "schema": "SafetyPlan",
+      "description": "User personal safety plans"
+    },
+    "/users/{userId}/safetyPlanLogs/{logId}": {
+      "schema": "SafetyPlanLog",
+      "description": "User daily safety check and update logs"
+    },
+    "/users/{userId}/thoughtRecords/{recordId}": {
+      "schema": "ThoughtRecord",
+      "description": "CBT Diary entries"
+    },
+    "/users/{userId}/moodLogs/{logId}": {
+      "schema": "MoodLog",
+      "description": "Stress and mood logs"
+    }
+  }
+}

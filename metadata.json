@@ -1,0 +1,8 @@
+{
+  "name": "JaiGuGuRu (ใจกู...กูรู้) - เพื่อใจของฉัน",
+  "description": "แอปพลิเคชันเพื่อนคู่ใจ คอนเซ็ปต์ ใจของฉัน ฉันรู้ใจฉันดี มุ่งเน้นการดูแลสุขภาพจิตด้วยหลักการ CBT, DBT และ AI ชาญฉลาด",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
