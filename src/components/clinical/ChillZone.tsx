@@ -14,6 +14,7 @@ import {
   Target
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { toast } from 'react-hot-toast';
 
 export default function ChillZone() {
   const [activeMode, setActiveMode] = useState<'breathing' | 'pmr' | 'meditation' | null>(null);
@@ -212,197 +213,528 @@ function PMRExercise() {
   );
 }
 
-function MeditationExercise() {
-  const [theme, setTheme] = useState<'stress' | 'focus' | 'sleep'>('stress');
-  const [duration, setDuration] = useState(5); // minutes
-  const [timeLeft, setTimeLeft] = useState(duration * 60);
-  const [isActive, setIsActive] = useState(false);
-  const [currentPrompt, setCurrentPrompt] = useState('เตรียมตัวให้พร้อม...');
+class AmbientSynth {
+  private ctx: AudioContext | null = null;
+  private primaryOSC: OscillatorNode | null = null;
+  private secondaryOSC: OscillatorNode | null = null;
+  private filter: BiquadFilterNode | null = null;
+  private filterLFO: OscillatorNode | null = null;
+  private filterLFOGain: GainNode | null = null;
+  private gainNode: GainNode | null = null;
+  private noiseNode: ScriptProcessorNode | null = null;
+  private noiseGain: GainNode | null = null;
+  private active = false;
 
-  const themes = {
-    stress: {
-      label: 'ลดความเครียด',
-      icon: <Heart className="w-5 h-5" />,
-      color: 'bg-rose-50 text-rose-600',
-      prompts: [
-        'หายใจเข้าลึกๆ... ปล่อยความกังวลออกไปกับลมหายใจ...',
-        'สังเกตความตึงเครียดที่หัวไหล่ แล้วค่อยๆ ผ่อนมันลง...',
-        'คุณกำลังทำได้ดีมาก ทุกอย่างจะผ่านไปได้ด้วยดี...',
-        'รู้สึกถึงความเบาสบายที่ค่อยๆ แผ่ซ่านไปทั่วร่างกาย...',
-        'ปล่อยวางทุกความคิดที่ไม่ได้จำเป็นในตอนนี้...'
-      ]
-    },
-    focus: {
-      label: 'สร้างสมาธิ',
-      icon: <Target className="w-5 h-5" />,
-      color: 'bg-indigo-50 text-indigo-600',
-      prompts: [
-        'รวบรวมจิตใจมาที่จุดกึ่งกลางระหว่างคิ้ว...',
-        'สัมผัสลมหายใจที่กระทบปลายจมูก สั้น.. หรือ ยาว.. แค่รับรู้...',
-        'ปล่อยความว้าวุ่นให้ผ่านไปเหมือนก้อนเมฆบนท้องฟ้า...',
-        'ความสงบคือพลังของการสร้างสรรค์ คุณพร้อมสำหรับวันนี้...',
-        'หายใจเข้า รับเอาพลังงานที่สดชื่นเข้ามา...'
-      ]
-    },
-    sleep: {
-      label: 'ช่วยให้นอนหลับ',
-      icon: <Moon className="w-5 h-5" />,
-      color: 'bg-purple-50 text-purple-600',
-      prompts: [
-        'ทิ้งน้ำหนักตัวลงบนที่นอน... ปล่อยให้มันโอบอุ้มคุณ...',
-        'ความมืดคือพื้นที่ปลอดภัยของคุณ จิตใจเริ่มสงบลง...',
-        'นับลมหายใจช้าๆ 1... 2... แล้วเคลิ้มหลับไป...',
-        'ร่างกายของคุณกำลังฟื้นฟูตัวเองในความฝัน...',
-        'พรุ่งนี้เช้าคุณจะตื่นมาพร้อมความสดใส พักผ่อนเถอะนะ...'
-      ]
+  start() {
+    if (this.active) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      this.ctx = new AudioCtx();
+      this.active = true;
+
+      // Master Gain
+      this.gainNode = this.ctx.createGain();
+      this.gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+      this.gainNode.connect(this.ctx.destination);
+
+      // Low drone (Fundamental C2 = 65.41 Hz)
+      this.primaryOSC = this.ctx.createOscillator();
+      this.primaryOSC.type = 'triangle';
+      this.primaryOSC.frequency.setValueAtTime(65.41, this.ctx.currentTime);
+
+      // Perfect fifth drone (G2 = 97.99 Hz)
+      this.secondaryOSC = this.ctx.createOscillator();
+      this.secondaryOSC.type = 'sine';
+      this.secondaryOSC.frequency.setValueAtTime(97.99, this.ctx.currentTime);
+
+      // Deep Lowpass filter
+      this.filter = this.ctx.createBiquadFilter();
+      this.filter.type = 'lowpass';
+      this.filter.frequency.setValueAtTime(180, this.ctx.currentTime);
+      this.filter.Q.setValueAtTime(4, this.ctx.currentTime);
+
+      // LFO to sweep filter cutoff (making the sound "breathe" slowly)
+      this.filterLFO = this.ctx.createOscillator();
+      this.filterLFO.type = 'sine';
+      this.filterLFO.frequency.setValueAtTime(0.08, this.ctx.currentTime); // slow: 12.5 seconds per wave
+
+      this.filterLFOGain = this.ctx.createGain();
+      this.filterLFOGain.gain.setValueAtTime(80, this.ctx.currentTime); // sweep filter frequency
+
+      // Bind LFO -> Filter Cutoff
+      this.filterLFO.connect(this.filterLFOGain);
+      this.filterLFOGain.connect(this.filter.frequency);
+
+      // Connect drone oscillators -> filter -> master gain
+      this.primaryOSC.connect(this.filter);
+      this.secondaryOSC.connect(this.filter);
+      this.filter.connect(this.gainNode);
+
+      // Synthesize a soothing "Wind/Breeze" sound (Brownian noise)
+      if (this.ctx.createScriptProcessor) {
+        let lastOut = 0.0;
+        this.noiseNode = this.ctx.createScriptProcessor(4096, 0, 1);
+        this.noiseNode.onaudioprocess = (e) => {
+          const output = e.outputBuffer.getChannelData(0);
+          for (let i = 0; i < output.length; i++) {
+            const white = Math.random() * 2 - 1;
+            output[i] = (lastOut + (0.02 * white)) / 1.02;
+            lastOut = output[i];
+            output[i] *= 1.2;
+          }
+        };
+
+        const windFilter = this.ctx.createBiquadFilter();
+        windFilter.type = 'bandpass';
+        windFilter.frequency.setValueAtTime(350, this.ctx.currentTime);
+        windFilter.Q.setValueAtTime(1.2, this.ctx.currentTime);
+
+        const windLFO = this.ctx.createOscillator();
+        windLFO.type = 'sine';
+        windLFO.frequency.setValueAtTime(0.04, this.ctx.currentTime); // 25s wave
+
+        const windLFOGain = this.ctx.createGain();
+        windLFOGain.gain.setValueAtTime(140, this.ctx.currentTime);
+
+        windLFO.connect(windLFOGain);
+        windLFOGain.connect(windFilter.frequency);
+
+        this.noiseGain = this.ctx.createGain();
+        this.noiseGain.gain.setValueAtTime(0.03, this.ctx.currentTime); // soft wind volume
+
+        this.noiseNode.connect(windFilter);
+        windFilter.connect(this.noiseGain);
+        this.noiseGain.connect(this.gainNode);
+
+        windLFO.start();
+      }
+
+      this.primaryOSC.start();
+      this.secondaryOSC.start();
+      this.filterLFO.start();
+
+      // Smooth rise in music volume over 3 seconds
+      this.gainNode.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 3.0);
+    } catch (e) {
+      console.warn("Speech audio initialization blocked or unsupported", e);
+    }
+  }
+
+  setVolume(vol: number) {
+    if (this.gainNode && this.ctx) {
+      this.gainNode.gain.linearRampToValueAtTime(vol * 0.18, this.ctx.currentTime + 0.4);
+    }
+  }
+
+  stop() {
+    if (!this.active) return;
+    this.active = false;
+    if (this.gainNode && this.ctx) {
+      try {
+        const cur = this.ctx.currentTime;
+        this.gainNode.gain.cancelScheduledValues(cur);
+        this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, cur);
+        this.gainNode.gain.linearRampToValueAtTime(0.0, cur + 1.0);
+        
+        setTimeout(() => {
+          try {
+            this.primaryOSC?.stop();
+            this.secondaryOSC?.stop();
+            this.filterLFO?.stop();
+            if (this.noiseNode) {
+              this.noiseNode.disconnect();
+            }
+            this.ctx?.close();
+          } catch(err) {}
+        }, 1100);
+      } catch (e) {
+        this.ctx?.close();
+      }
+    }
+  }
+}
+
+let ambientSynthInstance: AmbientSynth | null = null;
+function getAmbientSynth(): AmbientSynth {
+  if (!ambientSynthInstance) {
+    ambientSynthInstance = new AmbientSynth();
+  }
+  return ambientSynthInstance;
+}
+
+const STEP_SENTENCES: Record<1 | 2 | 3 | 4, string[]> = {
+  1: [
+    "เชิญชวนหาพื้นที่หรือท่าทางที่สบายที่สุด",
+    "ไม่ว่าจะเป็นการนั่งบนเก้าอี้โดยให้ฝ่าเท้าวางราบกับพื้น หรือนอนราบบนเบาะ",
+    "ให้หลังตรงผ่อนคลาย ไม่เกร็ง",
+    "เมื่อพร้อมแล้ว ค่อยๆ หลับตาลง หรือทอดสายตามองต่ำด้านหน้าอย่างผ่อนคลาย",
+    "นำความรู้สึกทั้งหมดมาจดจ่อที่ลมหายใจ",
+    "สังเกตสัมผัสของลมหายใจเข้า... และลมหายใจออก...",
+    "ไม่ต้องพยายามเปลี่ยนแปลงจังหวะการหายใจ เพียงแค่รับรู้ว่าตอนนี้ร่างกายกำลังหายใจ",
+    "หากมีความคิดเรื่องราวต่างๆ หรือเสียงรอบข้างแทรกเข้ามา ให้รับรู้ว่ามีความคิดเกิดขึ้น",
+    "แล้วค่อยๆ นำความสนใจกลับมาที่ลมหายใจอย่างนุ่มนวล โดยไม่ต้องตำหนิตัวเอง"
+  ],
+  2: [
+    "ตอนนี้ ค่อยๆ เลื่อนความสนใจและความรู้สึก ลงไปที่เท้าทั้งสองข้าง",
+    "สังเกตการสัมผัสของฝ่าเท้ากับพื้นหรือเบาะ ความรู้สึกอุ่น เย็น หรืออาจจะไม่มีความรู้สึกใดๆ ก็รับรู้ได้ตามจริง",
+    "ลองจินตนาการว่าเรากำลังส่งลมหายใจผ่านลำตัว ลงไปจรดที่ปลายเท้า",
+    "จากนั้น เลื่อนความสนใจขึ้นมาที่ข้อเท้า น่อง หัวเข่า และต้นขา",
+    "สังเกตดูว่ากล้ามเนื้อบริเวณนี้มีความตึงเครียดหรือผ่อนคลายอย่างไร",
+    "เลื่อนความรู้สึกขึ้นมาที่อุ้งเชิงกราน หน้าท้อง และแผ่นหลังส่วนล่าง",
+    "สังเกตการขยายตัวของหน้าท้องเมื่อหายใจเข้า... และการยุบตัวลงเมื่อหายใจออก...",
+    "หากพบความตึงเครียดบริเวณท้องหรือหลัง ให้หายใจออกแล้วปล่อยให้กล้ามเนื้อบริเวณนั้นอ่อนยวบและผ่อนคลายลง",
+    "เคลื่อนความสนใจขึ้นมาที่หน้าอก หัวไหล่ และแขนทั้งสองข้าง",
+    "ปล่อยให้หัวไหล่ตกลงตามธรรมชาติ คลายความเกร็ง ปล่อยความรู้สึกไปจนถึงฝ่ามือและปลายนิ้ว",
+    "เลื่อนขึ้นมาที่ลำคอ ขากรรไกร ริมฝีปาก รอบดวงตา หน้าผาก และศีรษะ",
+    "สังเกตดูว่าใบหน้าของเรากำลังเผลอเกร็งอยู่หรือไม่ ค่อยๆ คลายกล้ามเนื้อใบหน้า ปล่อยให้หน้าผากเรียบตึงและผ่อนคลาย"
+  ],
+  3: [
+    "ตอนนี้ ให้เปิดรับรู้ความรู้สึกของร่างกายทั้งหมดในขณะนี้ ให้ร่างกายได้พักอยู่ในความนิ่ง",
+    "สังเกตดูว่า ณ ขณะนี้... สภาวะภายในของเราเป็นอย่างไร มีความรู้สึกทางกายแบบไหน",
+    "อารมณ์ใดกำลังปรากฏอยู่ หรือมีความคิดอะไรเกิดขึ้นในใจ",
+    "โปรดจำไว้ว่า จุดประสงค์ของการฝึกนี้ไม่ใช่การบังคับให้ใจสงบ หรือผลักไสความรู้สึกอึดอัดใดๆ ออกไป",
+    "แต่เป็นการอนุญาตให้ทุกสภาวะที่เกิดขึ้นในตอนนี้ ได้ดำรงอยู่ตรงนั้นอย่างที่มันเป็น",
+    "เพียงเฝ้าดู ยอมรับ และสังเกตเห็นด้วยความเข้าใจ"
+  ],
+  4: [
+    "เมื่อพร้อมแล้ว ค่อยๆ นำความรู้สึกกลับมาที่การหายใจเข้าและออกลึกๆ อีกครั้ง",
+    "ค่อยๆ ขยับปลายนิ้วมือและนิ้วเท้า ยืดเหยียดร่างกายเบาๆ",
+    "และเมื่อรู้สึกว่าร่างกายและจิตใจพร้อมแล้ว ค่อยๆ ลืมตาขึ้น",
+    "นำความรู้สึกที่ผ่อนคลายและรู้เท่าทันสภาวะภายในนี้ ไปใช้ในชีวิตประจำวัน"
+  ]
+};
+
+function MeditationExercise() {
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isActive, setIsActive] = useState(false);
+  const [sentenceIndex, setSentenceIndex] = useState(0);
+  const [audioActive, setAudioActive] = useState(true);
+  const [audioVolume, setAudioVolume] = useState(0.3);
+
+  const getStepTitle = (s: number) => {
+    switch(s) {
+      case 1: return 'บทนำ (การตั้งหลักและการหายใจ)';
+      case 2: return 'การสํารวจร่างกาย (Body Scan)';
+      case 3: return 'การสังเกตสภาวะภายใน (Observing Internal State)';
+      case 4: return 'บทสรุป (การกลับคืนสู่ปัจจุบัน)';
+      default: return '';
     }
   };
 
-  useEffect(() => {
-    setTimeLeft(duration * 60);
-  }, [duration]);
+  const getStepConcept = (s: number) => {
+    switch(s) {
+      case 1: return 'ตั้งจิตใจให้อยู่กับปัจจุบันโดยไม่ตัดสิน สังเกตและผสานลมหายใจธรรมชาติตามจริง';
+      case 2: return 'สแกนคลึงสำรวจความตึงเกร็งและปลดประโลมกล้ามเนื้อกายทีละส่วนอย่างอ่อนโยน';
+      case 3: return 'เปิดกว้างยอมรับทุกอารมณ์ ความรู้สึก อึดอัดแน่นอก โดยไม่ฝืน ดื้อรั้น หรือต่อต้านบิดเบือน';
+      case 4: return 'ตื่นรู้ บิดกาย ปลุกพลังความสดชื่นมั่นคงและสติคืนสู่โลกปัจจุบันอย่างอุ่นใจ';
+      default: return '';
+    }
+  };
 
+  const sentences = STEP_SENTENCES[step];
+
+  // Auto progression of sentences
   useEffect(() => {
     let timer: any;
-    if (isActive && timeLeft > 0) {
+    if (isActive) {
       timer = setInterval(() => {
-        setTimeLeft(t => t - 1);
-        
-        // Update prompt every 15 seconds
-        if (timeLeft % 15 === 0) {
-          const randomPrompt = themes[theme].prompts[Math.floor(Math.random() * themes[theme].prompts.length)];
-          setCurrentPrompt(randomPrompt);
-          speak(randomPrompt);
-        }
-      }, 1000);
-    } else if (timeLeft === 0) {
-      setIsActive(false);
-      setCurrentPrompt('การฝึกเสร็จสิ้นแล้ว สัมผัสถึงความเปลี่ยนไหม?');
-      speak('การฝึกเสร็จสิ้นแล้ว สัมผัสถึงความเปลี่ยนไหม?');
+        setSentenceIndex((prev) => {
+          if (prev < sentences.length - 1) {
+            return prev + 1;
+          } else {
+            return prev;
+          }
+        });
+      }, 7500); // peaceful progression every 7.5 seconds
     }
     return () => clearInterval(timer);
-  }, [isActive, timeLeft, theme]);
+  }, [isActive, sentences.length, step]);
 
-  const speak = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'th-TH';
-      utterance.rate = 0.8;
-      window.speechSynthesis.speak(utterance);
+  // Ambient sound synthesizer engine lifecycle
+  useEffect(() => {
+    const synth = getAmbientSynth();
+    if (isActive && audioActive) {
+      synth.start();
+      synth.setVolume(audioVolume);
+    } else {
+      synth.stop();
+    }
+    return () => {
+      synth.stop();
+    };
+  }, [isActive, audioActive]);
+
+  useEffect(() => {
+    if (isActive && audioActive) {
+      getAmbientSynth().setVolume(audioVolume);
+    }
+  }, [audioVolume, isActive, audioActive]);
+
+  const handleStart = () => {
+    setIsActive(true);
+    setStep(1);
+    setSentenceIndex(0);
+  };
+
+  const handleNext = () => {
+    if (step < 4) {
+      setStep((prev) => (prev + 1) as any);
+      setSentenceIndex(0);
+    } else {
+      setIsActive(false);
+      setStep(1);
+      setSentenceIndex(0);
+      toast.success('การฝึกเจริญสติวิถีบำบัด MBCT สำเร็จลุล่วง จิตระลึกใสพร้อมเผชิญวันใหม่อย่างสุขใจค่ะ 💖');
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handlePrev = () => {
+    if (step > 1) {
+      setStep((prev) => (prev - 1) as any);
+      setSentenceIndex(0);
+    }
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col items-center space-y-8">
-      {!isActive && timeLeft === duration * 60 ? (
-        <div className="w-full space-y-8">
-          <div className="space-y-4">
-            <label className="text-xs font-black uppercase tracking-[2px] text-slate-400">เลือกหัวข้อ</label>
-            <div className="grid grid-cols-1 gap-3">
-              {(Object.keys(themes) as Array<keyof typeof themes>).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTheme(t)}
-                  className={cn(
-                    "p-4 rounded-2xl border-2 transition-all flex items-center justify-between",
-                    theme === t ? "border-indigo-600 bg-indigo-50 shadow-md" : "border-slate-100 opacity-60 grayscale"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn("p-2 rounded-xl", themes[t].color)}>
-                      {themes[t].icon}
-                    </div>
-                    <span className="font-bold text-slate-900">{themes[t].label}</span>
-                  </div>
-                  {theme === t && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
-                </button>
-              ))}
+    <div className="w-full flex-1 flex flex-col items-center space-y-6">
+      {!isActive ? (
+        <div className="w-full space-y-6">
+          <div className="p-6 bg-emerald-50/80 border border-emerald-100 rounded-[2rem] text-left space-y-3">
+            <h4 className="font-black text-sm text-emerald-950 flex items-center gap-2">
+              🍃 สติบำบัดวิถีธรรม MBCT (Mindfulness-Based Cognitive Therapy)
+            </h4>
+            <p className="text-xs text-emerald-900/80 leading-relaxed">
+              การฝึกให้จิตใจอยู่กับปัจจุบันโดยไม่ตัดสิน เมื่อจิตหลุดไปคิด ให้สังเกตเห็นแล้วดึงกลับมา เพื่อช่วยให้เท่าทันความคิด/อารมณ์ และลดปฏิกิริยาตอบสนองอัตโนมัติ นำพากายและใจของท่านกลับคืนสู่ปัจจุบันขณะอันแสนนิ่งเย็น
+            </p>
+            <div className="text-[11px] text-emerald-800 font-bold bg-white/60 p-3 rounded-xl border border-emerald-100">
+              💡 <span className="underline">หลักการสำคัญ</span>: ยอมรับสภาวะจิตใจตามจริง ไม่ฝืนเค้น สบายตัว ปราศจากความพินิจร้ายหรืออคติใดๆ
             </div>
           </div>
 
-          <div className="space-y-4">
-            <label className="text-xs font-black uppercase tracking-[2px] text-slate-400">ระยะเวลา (นาที)</label>
-            <div className="flex gap-3">
-              {[5, 10, 15].map(m => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-left">
+            <div className="p-4 bg-emerald-50/30 rounded-2xl border border-emerald-100/50 space-y-1">
+              <span className="text-xs font-black text-emerald-800 uppercase block">🟢 ผ่อนคลายทางสายตา (Green Glow)</span>
+              <p className="text-[11px] text-slate-500 leading-relaxed">ข้อความนำเดินเป็นจังหวะเงียบ ค่อยๆ ลอยเปลี่ยนผ่านคล้ายลมพัดเบาใจ โดยปราศจากเสียงพูดเสียงเตือนที่แหลมคมยุ่งเหยิง</p>
+            </div>
+            <div className="p-4 bg-emerald-50/30 rounded-2xl border border-emerald-100/50 space-y-1">
+              <span className="text-xs font-black text-emerald-800 uppercase block">🎵 คลื่นธรรมชาติโอบอุ้ม (Drone Sound)</span>
+              <p className="text-[11px] text-slate-500 leading-relaxed">คลื่นเสียงความถี่ต่ำออร์แกนิกและลม Brownian สังเคราะห์สด เพื่อพยุงระบบหายใจและสลายกระแสวิตกกังวลสะสม</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-left">
+            <label className="text-xs font-black uppercase tracking-[1.5px] text-slate-400 block">ระดับเสียงดนตรีบำบัดโอบอุ้ม</label>
+            <div className="p-4 bg-emerald-50/30 rounded-2xl border border-emerald-100 flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-950">สถานะ: {audioActive ? 'เปิดดนตรีคลื่นบำบัด' : 'ปิดเสียงคลื่น'}</span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={audioVolume}
+                  onChange={(e) => setAudioVolume(parseFloat(e.target.value))}
+                  className="w-20 accent-emerald-600 bg-emerald-200 h-1 rounded-lg cursor-pointer"
+                  disabled={!audioActive}
+                />
                 <button
-                  key={m}
-                  onClick={() => setDuration(m)}
+                  onClick={() => setAudioActive(!audioActive)}
                   className={cn(
-                    "flex-1 py-3 rounded-xl font-bold transition-all",
-                    duration === m ? "bg-indigo-600 text-white shadow-lg" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                    audioActive ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
                   )}
                 >
-                  {m} นาที
+                  {audioActive ? 'ปิดเสียง' : 'เปิดเสียง'}
                 </button>
-              ))}
+              </div>
             </div>
           </div>
 
           <button 
-            onClick={() => { setIsActive(true); speak('เริ่มการทำสมาธิ... นั่งในท่าที่สบายที่สุด'); }}
-            className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black text-lg shadow-xl shadow-indigo-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+            onClick={handleStart}
+            className="w-full py-4.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl font-black text-sm shadow-xl shadow-emerald-100 hover:opacity-95 transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
           >
-            <Play className="w-5 h-5 fill-current" /> เริ่มทำสมาธิ
+            <Play className="w-4 h-4 fill-current animate-pulse" /> เริ่มต้นเข้าสู่สัมผัสธรรม MBCT Flow
           </button>
         </div>
       ) : (
-        <div className="w-full flex-1 flex flex-col items-center justify-center space-y-12">
-          <div className="relative flex items-center justify-center">
-            {/* Visualizer and pulse */}
-            <motion.div 
+        <div className="w-full flex-1 flex flex-col items-center justify-between space-y-6 bg-gradient-to-br from-emerald-950 via-green-950 to-teal-950 p-6 md:p-8 rounded-[3rem] border border-emerald-800/40 relative overflow-hidden shadow-2xl min-h-[460px] text-emerald-50">
+          
+          {/* Ambient Wind Visualizer Lines */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-35">
+            <motion.div
               animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.2, 0.4, 0.2]
+                x: [-180, 500],
+                opacity: [0, 0.4, 0]
               }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className={cn("absolute w-64 h-64 rounded-full blur-3xl", theme === 'stress' ? 'bg-rose-400' : theme === 'focus' ? 'bg-indigo-400' : 'bg-purple-400')}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+              className="absolute h-[1.5px] w-64 bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent top-12 left-0"
             />
-            <div className="text-center relative z-10">
-              <div className="text-6xl font-black tracking-tighter text-slate-900 mb-2">{formatTime(timeLeft)}</div>
-              <div className="text-xs font-bold uppercase tracking-[3px] text-slate-400">{themes[theme].label}</div>
+            <motion.div
+              animate={{
+                x: [-220, 500],
+                opacity: [0, 0.3, 0]
+              }}
+              transition={{ duration: 14, repeat: Infinity, ease: "linear", delay: 3 }}
+              className="absolute h-[1px] w-80 bg-gradient-to-r from-transparent via-teal-300/30 to-transparent bottom-24 left-0"
+            />
+          </div>
+
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+            <button 
+              onClick={() => setAudioActive(!audioActive)}
+              className={cn(
+                "px-3 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 text-[10px] font-extrabold border shadow-sm",
+                audioActive 
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300" 
+                  : "bg-emerald-950/40 border-emerald-800/30 text-emerald-500"
+              )}
+              title={audioActive ? "ปิดเสียงดนตรีบำบัด" : "เปิดเสียงดนตรีบำบัด"}
+            >
+              <Volume2 className={cn("w-3.5 h-3.5", audioActive && "animate-pulse")} />
+              <span>{audioActive ? 'เปิดสุนทรียภาพดนตรี': 'ปิดเสียงธรรมชาติ'}</span>
+            </button>
+            
+            {audioActive && (
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={audioVolume}
+                onChange={(e) => setAudioVolume(parseFloat(e.target.value))}
+                className="w-14 accent-emerald-400 bg-emerald-900/40 h-1 rounded-lg cursor-pointer"
+                title="ปรับระดับเสียงดนตรีบำบัด"
+              />
+            )}
+          </div>
+
+          {/* Header Progress Indicators */}
+          <div className="w-full space-y-2 relative z-10">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-emerald-300">{getStepTitle(step)}</span>
+              <span className="font-mono text-emerald-400 font-bold">ขั้นตอน {step} จาก 4</span>
+            </div>
+            
+            <div className="flex gap-1 bg-emerald-950/60 h-1.5 rounded-full overflow-hidden border border-emerald-900/30">
+              {[1, 2, 3, 4].map((i) => (
+                <div 
+                  key={i} 
+                  className={cn(
+                    "h-full flex-1 transition-all duration-500", 
+                    i <= step ? "bg-gradient-to-r from-emerald-400 to-teal-500" : "bg-emerald-950/40"
+                  )} 
+                />
+              ))}
             </div>
           </div>
 
-          <div className="bg-slate-50 p-8 rounded-[2.5rem] w-full text-center min-h-[140px] flex items-center justify-center">
-            <AnimatePresence mode="wait">
-              <motion.p 
-                key={currentPrompt}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="text-lg font-bold text-slate-700 italic leading-relaxed"
+          {/* Beautiful pulsing organic breeze canvas */}
+          <div className="relative flex items-center justify-center w-full min-h-[140px] my-2">
+            {[1, 2, 3].map((idx) => (
+              <motion.div
+                key={idx}
+                animate={{
+                  scale: [1, 2.1, 1],
+                  opacity: [0.12, 0, 0.12],
+                  borderRadius: ["42% 58% 70% 30% / 45% 45% 55% 55%", "70% 30% 52% 48% / 60% 40% 60% 40%", "42% 58% 70% 30% / 45% 45% 55% 55%"]
+                }}
+                transition={{
+                  duration: 8 + idx * 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="absolute w-36 h-36 border border-emerald-400/20 bg-emerald-500/5 mix-blend-screen"
+              />
+            ))}
+            
+            <div className="text-center relative z-10 space-y-2 px-4">
+              <motion.div
+                animate={{ y: [0, -4, 0], rotate: [-2, 2, -2] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                className="inline-flex p-3 bg-emerald-950/60 text-emerald-300 rounded-full border border-emerald-800/50 shadow-inner"
               >
-                "{currentPrompt}"
-              </motion.p>
-            </AnimatePresence>
+                {step === 1 && <Wind className="w-5 h-5 text-emerald-300 animate-pulse" />}
+                {step === 2 && <Zap className="w-5 h-5 text-emerald-300" />}
+                {step === 3 && <Target className="w-5 h-5 text-teal-300" />}
+                {step === 4 && <CheckCircle2 className="w-5 h-5 text-emerald-300" />}
+              </motion.div>
+              <p className="text-[12px] font-black text-emerald-300 uppercase tracking-[1px]">{getStepTitle(step)}</p>
+              <div className="flex items-center gap-1.5 justify-center text-[10px] text-emerald-200/55 font-bold uppercase">
+                <span>สลัดความคิดรบกวน</span>
+                <span>•</span>
+                <span>ประโยคที่ {sentenceIndex + 1} / {sentences.length}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex gap-4 w-full">
-            <button 
-              onClick={() => setIsActive(!isActive)}
-              className="flex-1 py-4 bg-white border-2 border-slate-200 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
-            >
-              {isActive ? <><Pause className="w-5 h-5" /> พัก</> : <><Play className="w-5 h-5" /> เล่นต่อ</>}
-            </button>
-            <button 
-              onClick={() => { setIsActive(false); setTimeLeft(duration * 60); window.speechSynthesis.cancel(); }}
-              className="px-6 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 transition-all"
-            >
-              <RotateCcw className="w-5 h-5" />
-            </button>
+          {/* Progressive Wind-like Text Container with manual dot navigation */}
+          <div className="bg-emerald-950/40 p-6 md:p-8 rounded-[2.5rem] w-full text-center min-h-[160px] flex flex-col justify-center border border-emerald-800/30 relative">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={`${step}-${sentenceIndex}`}
+                initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -15, filter: "blur(4px)" }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+                className="text-emerald-100 font-sans font-extrabold text-sm md:text-base leading-relaxed text-center px-2"
+              >
+                "{sentences[sentenceIndex]}"
+              </motion.p>
+            </AnimatePresence>
+
+            {/* Quick manual navigation bullet indicators */}
+            <div className="flex justify-center flex-wrap gap-1.5 mt-5">
+              {sentences.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSentenceIndex(idx)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all duration-300 cursor-pointer",
+                    sentenceIndex === idx 
+                      ? "bg-emerald-400 w-5" 
+                      : "bg-emerald-800/50 hover:bg-emerald-700/40"
+                  )}
+                  title={`ไปยังท่อนที่ ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2 text-slate-400">
-            <Volume2 className="w-4 h-4" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">เปิดเสียงเพื่อให้ AI นำทางคุณ</span>
+
+          {/* Controls */}
+          <div className="w-full space-y-3.5 relative z-10">
+            <div className="flex gap-3">
+              <button 
+                onClick={handlePrev}
+                disabled={step === 1}
+                className="flex-1 py-3.5 bg-emerald-900/30 border border-emerald-800/40 text-emerald-200 rounded-2xl text-xs font-black transition-all hover:bg-emerald-900/50 disabled:opacity-20 disabled:pointer-events-none active:scale-97 cursor-pointer"
+              >
+                ย้อนกลับ
+              </button>
+
+              <button 
+                onClick={handleNext}
+                className="flex-3 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl text-xs font-black transition-all hover:shadow-lg hover:shadow-emerald-950/40 active:scale-97 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>{step === 4 ? 'เสร็จสิ้นครบกระบวนฝึก' : 'ขั้นถัดไป'}</span>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between px-2">
+              <button 
+                onClick={() => { setIsActive(false); setStep(1); setSentenceIndex(0); }}
+                className="text-[10px] font-bold text-red-400 hover:text-red-300 uppercase tracking-wider flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" /> ออกจากการนำฝึกชั่วคราว
+              </button>
+
+              <span className="text-[10px] text-emerald-400/70 font-bold uppercase tracking-widest flex items-center gap-1">
+                🍃 สติบำบัด MBCT • สลัดความคิด & ปล่อยวางความเครียด
+              </span>
+            </div>
           </div>
+
         </div>
       )}
     </div>
