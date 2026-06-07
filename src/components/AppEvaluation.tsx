@@ -18,7 +18,7 @@ import {
   Flame,
   Info
 } from 'lucide-react';
-import { db } from '@/src/lib/firebase';
+import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { 
   collection, 
   addDoc, 
@@ -97,6 +97,7 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
     } catch (e) {
       console.error("Error loading feedbacks:", e);
       toast.error("ไม่สามารถดึงผลประเมินสรุปได้");
+      handleFirestoreError(e, OperationType.LIST, 'appFeedback');
     } finally {
       setLoadingFeedbacks(false);
     }
@@ -134,6 +135,7 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
     } catch (err) {
       console.error("Firebase submit error:", err);
       toast.error('ระบบอินเทอร์เน็ตขัดข้อง กรุณาลองใหม่อีกครั้งนะ');
+      handleFirestoreError(err, OperationType.CREATE, 'appFeedback');
     } finally {
       setSubmitting(false);
     }

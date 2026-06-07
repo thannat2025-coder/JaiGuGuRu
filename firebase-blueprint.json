@@ -87,6 +87,23 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "type", "note"]
+    },
+    "AppFeedback": {
+      "title": "Application Evaluation and Feedback",
+      "description": "Evaluations on UI design, CBT features, first-aid tools, privacy, and general comments",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "userName": { "type": "string" },
+        "email": { "type": "string" },
+        "easeOfUse": { "type": "number" },
+        "cbtDojo": { "type": "number" },
+        "mentalFirstAid": { "type": "number" },
+        "privacyFeeling": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "userName", "email", "easeOfUse", "cbtDojo", "mentalFirstAid", "privacyFeeling", "createdAt"]
     }
   },
   "firestore": {
@@ -113,6 +130,10 @@
     "/users/{userId}/moodLogs/{logId}": {
       "schema": "MoodLog",
       "description": "Stress and mood logs"
+    },
+    "/appFeedback/{feedbackId}": {
+      "schema": "AppFeedback",
+      "description": "User satisfaction evaluations shared with the clinical creator"
     }
   }
 }

@@ -77,6 +77,19 @@ service cloud.firestore {
              data.enabled is bool;
     }
 
+    function isValidAppFeedback(data) {
+      return data.keys().hasAll(['uid', 'userName', 'email', 'easeOfUse', 'cbtDojo', 'mentalFirstAid', 'privacyFeeling', 'comment', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.userName is string && data.userName.size() <= 200 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.easeOfUse is number && data.easeOfUse >= 0 && data.easeOfUse <= 5 &&
+             data.cbtDojo is number && data.cbtDojo >= 0 && data.cbtDojo <= 5 &&
+             data.mentalFirstAid is number && data.mentalFirstAid >= 0 && data.mentalFirstAid <= 5 &&
+             data.privacyFeeling is number && data.privacyFeeling >= 0 && data.privacyFeeling <= 5 &&
+             data.comment is string && data.comment.size() <= 5000 &&
+             data.createdAt == request.time;
+    }
+
     // --- Collection Matches ---
 
     match /users/{userId} {
@@ -117,6 +130,11 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidReminder(incoming());
       allow update: if isOwner(userId) && isValidReminder(incoming());
       allow delete: if isOwner(userId);
+    }
+
+    match /appFeedback/{feedbackId} {
+      allow create: if isSignedIn() && isValidAppFeedback(incoming()) && isValidId(feedbackId);
+      allow list, get: if isSignedIn() && request.auth.token.email == 'thannat2025@gmail.com' && request.auth.token.email_verified == true;
     }
   }
 }
