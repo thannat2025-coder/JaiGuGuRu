@@ -65,6 +65,24 @@ export default function SafetyPlan({ user, isEmergency, resetEmergency, onBackTo
   const fetchPlan = async () => {
     setLoading(true);
     try {
+      if (user.uid.startsWith('local_')) {
+        const localData = localStorage.getItem(`safety_plan_${user.uid}`);
+        if (localData) {
+          const plan = JSON.parse(localData) as SafetyPlanData;
+          setData({
+            ...plan,
+            trustedContacts: plan.trustedContacts || [],
+            professionalHelp: plan.professionalHelp || [
+              { name: 'สายด่วนสุขภาพจิต', phone: '1323' },
+              { name: 'สมาคมสะมาริตันส์', phone: '02-113-6789' }
+            ],
+            environmentSafety: plan.environmentSafety || []
+          });
+        }
+        setLoading(false);
+        return;
+      }
+
       const q = query(collection(db, 'users', user.uid, 'safetyPlans'));
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
@@ -90,6 +108,25 @@ export default function SafetyPlan({ user, isEmergency, resetEmergency, onBackTo
 
   const savePlan = async () => {
     try {
+      if (user.uid.startsWith('local_')) {
+        localStorage.setItem(`safety_plan_${user.uid}`, JSON.stringify(data));
+        
+        // Log local safety plan updates
+        const savedLogs = localStorage.getItem(`safety_plan_logs_${user.uid}`) || '[]';
+        const parsedLogs = JSON.parse(savedLogs);
+        parsedLogs.push({
+          userId: user.uid,
+          type: 'plan-updated',
+          note: `อัปเดตกระดานแผนป้องกันความปลอดภัย: อัปเกรดเกราะป้องกันสำหรับรับมือกับ Triggers ด้วยความรู้สึกมั่นคง สัญญาณความปรองดองพร้อมใช้งานเรียบร้อยค่ะ 🛡️`,
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem(`safety_plan_logs_${user.uid}`, JSON.stringify(parsedLogs));
+
+        toast.success('บันทึกแผนป้องกันความปลอดภัยและทำสัญลักษณ์บนปฏิทินสำเร็จแล้วค่ะ 🌟');
+        setIsComplete(true);
+        return;
+      }
+
       await setDoc(doc(db, 'users', user.uid, 'safetyPlans', 'current'), {
         ...data,
         updatedAt: serverTimestamp()

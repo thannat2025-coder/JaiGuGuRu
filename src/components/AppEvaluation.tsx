@@ -77,6 +77,13 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
   const loadAllFeedbacks = async () => {
     setLoadingFeedbacks(true);
     try {
+      if (user.uid.startsWith('local_')) {
+        const saved = localStorage.getItem('local_feedbacks') || '[]';
+        setFeedbacks(JSON.parse(saved));
+        setLoadingFeedbacks(false);
+        return;
+      }
+
       const q = query(collection(db, 'appFeedback'), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       const fetched: EvaluationResult[] = [];
@@ -118,6 +125,26 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
 
     setSubmitting(true);
     try {
+      if (user.uid.startsWith('local_')) {
+        const saved = localStorage.getItem('local_feedbacks') || '[]';
+        const parsed = JSON.parse(saved);
+        const newFeedback = {
+          easeOfUse,
+          cbtDojo,
+          mentalFirstAid,
+          privacyFeeling,
+          comment,
+          email: user.email || 'guest@jaiguguru.org',
+          userName: user.displayName || 'ผู้ร่วมประเมินด่วน (Sandbox)',
+          createdAt: new Date().toISOString()
+        };
+        parsed.unshift(newFeedback);
+        localStorage.setItem('local_feedbacks', JSON.stringify(parsed));
+        setSubmitted(true);
+        toast.success('ขอบพระคุณสำหรับความคิดเห็นค่ะ ระบบบันทึกข้อมูลและแสดงผลจำลองเรียบร้อยแล้วค่ะ 🤍');
+        return;
+      }
+
       await addDoc(collection(db, 'appFeedback'), {
         uid: user.uid,
         userName: user.displayName || 'ผู้บำบัดใจนิรนาม',

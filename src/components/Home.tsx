@@ -183,6 +183,50 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
     
     const fetchData = async () => {
       try {
+        if (user.uid.startsWith('local_')) {
+          const disableDailySafety = localStorage.getItem('disableDailySafetyCheck') === 'true';
+          const lastCheckDate = localStorage.getItem('lastDailySafetyCheckDate') || '';
+          const todayStr = format(new Date(), 'yyyy-MM-dd');
+          if (!disableDailySafety && lastCheckDate !== todayStr) {
+            setShowSafetyCheck(true);
+          }
+
+          const localMoods = JSON.parse(localStorage.getItem(`mood_logs_${user.uid}`) || '[]');
+          
+          let hasCheckedInToday = false;
+          if (localMoods.length > 0) {
+            const newest = localMoods[localMoods.length - 1];
+            const lastDate = newest.createdAt ? new Date(newest.createdAt) : null;
+            if (lastDate && isSameDay(lastDate, new Date())) {
+              hasCheckedInToday = true;
+            }
+            setLastMood(newest.mood - 1);
+            setLastEmotionDetails({
+              emotionType: newest.emotionType,
+              mood: newest.mood,
+              quadrant: newest.quadrant
+            });
+          }
+
+          setIsCheckedInToday(hasCheckedInToday);
+          setShowReminder(!hasCheckedInToday);
+
+          const historicalEmotions: string[] = [];
+          localMoods.forEach((m: any) => {
+            const type = m.emotionType;
+            if (type && !historicalEmotions.includes(type)) {
+              historicalEmotions.push(type);
+            }
+          });
+          setCustomEmotions(historicalEmotions.slice(0, 8));
+
+          const localThoughts = JSON.parse(localStorage.getItem(`thought_records_${user.uid}`) || '[]');
+          const localReminders = JSON.parse(localStorage.getItem(`reminders_${user.uid}`) || '[]');
+          setRemindersCount(localReminders.filter((d: any) => d.enabled).length);
+          setStats({ totalMoods: localMoods.length, totalCBT: localThoughts.length });
+          return;
+        }
+
         // Daily safety check status trigger
         const disableDailySafety = localStorage.getItem('disableDailySafetyCheck') === 'true';
         const lastCheckDate = localStorage.getItem('lastDailySafetyCheckDate');
@@ -242,6 +286,24 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
   const handleConfirmSafety = async () => {
     setSubmittingSafety(true);
     try {
+      if (user.uid.startsWith('local_')) {
+        const savedLogs = localStorage.getItem(`safety_plan_logs_${user.uid}`) || '[]';
+        const parsedLogs = JSON.parse(savedLogs);
+        parsedLogs.push({
+          userId: user.uid,
+          type: 'safe-confirmed',
+          note: 'ยืนยันสภาวะความถามห่วงใย: ฉันยังรู้สึกปลอดภัยปกป้องคุ้มครองวิญญาณได้ดี 🤍',
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem(`safety_plan_logs_${user.uid}`, JSON.stringify(parsedLogs));
+
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        localStorage.setItem('lastDailySafetyCheckDate', todayStr);
+        setShowSafetyCheck(false);
+        toast.success('ยินดีเป็นอย่างยิ่งที่คุณปลอดภัยและก้าวผ่านวันไปได้ด้วยสติและรอยยิ้มนะคะ 🤍');
+        return;
+      }
+
       await addDoc(collection(db, 'users', user.uid, 'safetyPlanLogs'), {
         userId: user.uid,
         type: 'safe-confirmed',
@@ -281,6 +343,44 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
     const emojiVal = emojiMap[quadrantKey] || '✨';
 
     try {
+      if (user.uid.startsWith('local_')) {
+        const localMoods = JSON.parse(localStorage.getItem(`mood_logs_${user.uid}`) || '[]');
+        const newMood = {
+          userId: user.uid,
+          mood: intensity,
+          emotionType: selectedEmotion.thai,
+          quadrant: quadrantKey,
+          emoji: emojiVal,
+          note: customNote,
+          createdAt: new Date().toISOString()
+        };
+        localMoods.push(newMood);
+        localStorage.setItem(`mood_logs_${user.uid}`, JSON.stringify(localMoods));
+
+        setLastEmotionDetails({
+          emotionType: selectedEmotion.thai,
+          mood: intensity,
+          quadrant: quadrantKey
+        });
+        setIsCheckedInToday(true);
+        setShowReminder(false);
+        setIsComplete(true);
+        
+        // Reset flow states
+        setCurrentStep(1);
+        setValence(null);
+        setEnergy(null);
+        setSelectedEmotion(null);
+        setCustomNote('');
+        setIntensity(5);
+
+        toast.success('บันทึกอารมณ์สำเร็จ ขอบคุณที่แบ่งปันนะ 🤍');
+
+        const localThoughts = JSON.parse(localStorage.getItem(`thought_records_${user.uid}`) || '[]');
+        setStats({ totalMoods: localMoods.length, totalCBT: localThoughts.length });
+        return;
+      }
+
       await addDoc(collection(db, 'users', user.uid, 'moodLogs'), {
         userId: user.uid,
         mood: intensity,
@@ -714,7 +814,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              หวัดดี, {user.displayName?.split(' ')[0]}! ✨
+              หวัดดี, {user.displayName ? user.displayName.split(' ')[0] : 'สหาย'}! ✨
             </h2>
             <p className="text-slate-500 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400" /> {dailyQuote}

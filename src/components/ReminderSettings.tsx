@@ -59,6 +59,13 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
   const [newDays, setNewDays] = useState<string[]>(DAYS);
 
   useEffect(() => {
+    if (user.uid.startsWith('local_')) {
+      const saved = localStorage.getItem(`reminders_${user.uid}`) || '[]';
+      setReminders(JSON.parse(saved));
+      setLoading(false);
+      return;
+    }
+
     const q = query(
       collection(db, 'users', user.uid, 'reminders'),
       orderBy('createdAt', 'desc')
@@ -83,6 +90,28 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
     }
 
     try {
+      if (user.uid.startsWith('local_')) {
+        const saved = localStorage.getItem(`reminders_${user.uid}`) || '[]';
+        const list = JSON.parse(saved);
+        const newRem = {
+          id: 'rem_' + Date.now(),
+          userId: user.uid,
+          title: newTitle,
+          type: newType,
+          time: newTime,
+          days: newDays,
+          enabled: true,
+          createdAt: new Date().toISOString()
+        };
+        const updated = [newRem, ...list];
+        localStorage.setItem(`reminders_${user.uid}`, JSON.stringify(updated));
+        setReminders(updated);
+        setIsAdding(false);
+        resetNewForm();
+        toast.success('เพิ่มการแจ้งเตือนสำเร็จ');
+        return;
+      }
+
       await addDoc(collection(db, 'users', user.uid, 'reminders'), {
         userId: user.uid,
         title: newTitle,
@@ -110,6 +139,15 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
 
   const toggleReminder = async (id: string, enabled: boolean) => {
     try {
+      if (user.uid.startsWith('local_')) {
+        const saved = localStorage.getItem(`reminders_${user.uid}`) || '[]';
+        const list = JSON.parse(saved) as Reminder[];
+        const updated = list.map(r => r.id === id ? { ...r, enabled: !enabled } : r);
+        localStorage.setItem(`reminders_${user.uid}`, JSON.stringify(updated));
+        setReminders(updated);
+        return;
+      }
+
       await updateDoc(doc(db, 'users', user.uid, 'reminders', id), {
         enabled: !enabled
       });
@@ -120,6 +158,16 @@ export default function ReminderSettings({ user }: ReminderSettingsProps) {
 
   const deleteReminder = async (id: string) => {
     try {
+      if (user.uid.startsWith('local_')) {
+        const saved = localStorage.getItem(`reminders_${user.uid}`) || '[]';
+        const list = JSON.parse(saved) as Reminder[];
+        const updated = list.filter(r => r.id !== id);
+        localStorage.setItem(`reminders_${user.uid}`, JSON.stringify(updated));
+        setReminders(updated);
+        toast.success('ลบการแจ้งเตือนแล้ว');
+        return;
+      }
+
       await deleteDoc(doc(db, 'users', user.uid, 'reminders', id));
       toast.success('ลบการแจ้งเตือนแล้ว');
     } catch (error) {

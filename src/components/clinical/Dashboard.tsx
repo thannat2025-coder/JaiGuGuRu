@@ -91,6 +91,47 @@ export default function Dashboard({ user }: DashboardProps) {
   const fetchData = async () => {
     setLoading(true);
     try {
+      if (user.uid.startsWith('local_')) {
+        const localMoods = JSON.parse(localStorage.getItem(`mood_logs_${user.uid}`) || '[]');
+        const moods = localMoods.map((m: any) => ({
+          ...m,
+          date: m.createdAt ? new Date(m.createdAt) : null
+        }));
+        setMoodLogs(moods);
+
+        const localThoughts = JSON.parse(localStorage.getItem(`thought_records_${user.uid}`) || '[]');
+        const thoughts = localThoughts.map((t: any) => ({
+          ...t,
+          date: t.createdAt ? new Date(t.createdAt) : null
+        })).reverse();
+        setThoughtRecords(thoughts);
+
+        const localPlan = localStorage.getItem(`safety_plan_${user.uid}`);
+        if (localPlan) {
+          setSafetyPlan(JSON.parse(localPlan));
+        }
+
+        const localSafetyLogs = JSON.parse(localStorage.getItem(`safety_plan_logs_${user.uid}`) || '[]');
+        const decodedLogs = localSafetyLogs.map((l: any) => ({
+          ...l,
+          date: l.createdAt ? new Date(l.createdAt) : null
+        })).reverse();
+        setSafetyPlanLogs(decodedLogs);
+
+        const avg = moods.length > 0 
+          ? moods.reduce((acc: number, curr: any) => acc + (curr.mood || 0), 0) / moods.length 
+          : 0;
+        
+        setStats({
+          totalMoods: moods.length,
+          totalCBT: thoughts.length,
+          streak: calculateStreak(moods),
+          avgMood: parseFloat(avg.toFixed(1))
+        });
+        setLoading(false);
+        return;
+      }
+
       // Fetch Mood Logs (Last 100 entries)
       const moodQ = query(
         collection(db, 'users', user.uid, 'moodLogs'),

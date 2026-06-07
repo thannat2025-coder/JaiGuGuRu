@@ -78,6 +78,20 @@ export default function CBTDojo({ user, onEmergencyTrigger, onBackToHome }: { us
 
   const saveEntry = async () => {
     try {
+      if (user.uid.startsWith('local_')) {
+        const localRecords = localStorage.getItem(`thought_records_${user.uid}`) || '[]';
+        const parsed = JSON.parse(localRecords);
+        parsed.push({
+          ...entry,
+          userId: user.uid,
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem(`thought_records_${user.uid}`, JSON.stringify(parsed));
+        toast.success('บันทึกความคิดสำเร็จ');
+        setIsComplete(true);
+        return;
+      }
+
       await addDoc(collection(db, 'users', user.uid, 'thoughtRecords'), {
         ...entry,
         userId: user.uid,

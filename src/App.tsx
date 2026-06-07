@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { db, auth, loginWithGoogle } from '@/src/lib/firebase';
+import { db, auth, loginWithGoogle, loginAnonymously } from '@/src/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { 
@@ -39,13 +39,31 @@ import AppEvaluation from '@/src/components/AppEvaluation';
 type Tab = 'home' | 'mood' | 'chill' | 'safety' | 'aid' | 'dojo' | 'dashboard' | 'profile';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [emergencyMode, setEmergencyMode] = useState(false);
   const [hasConsented, setHasConsented] = useState<boolean | null>(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedUid = window.localStorage.getItem('current_user_uid');
+      if (savedUid && savedUid.startsWith('local_')) {
+        const savedEmail = window.localStorage.getItem('current_user_email');
+        const isGuest = savedUid === 'local_guest';
+        setUser({
+          uid: savedUid,
+          displayName: isGuest ? 'สหายผู้เยี่ยมชม (Sandbox)' : 'ผู้ใช้เฉพาะที่',
+          email: savedEmail || 'guest@jaiguguru.org',
+          photoURL: null,
+          isAnonymous: true
+        });
+        setHasConsented(true);
+        setLoading(false);
+        return;
+      }
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
@@ -79,6 +97,11 @@ export default function App() {
 
   const handleAcceptConsent = async () => {
     if (!user) return;
+    if (user.uid.startsWith('local_')) {
+      setHasConsented(true);
+      toast.success('ยินดีต้อนรับเข้าสู่วิถีบำบัดจิตใจค่ะ 🤍');
+      return;
+    }
     try {
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
@@ -97,12 +120,18 @@ export default function App() {
 
   const handleLogout = () => {
     auth.signOut();
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('current_user_email');
+      window.localStorage.removeItem('current_user_uid');
+    }
+    setUser(null);
     setActiveTab('home');
     setHasConsented(null);
     toast.success('ออกจากระบบสำเร็จ');
   };
 
   const [loggingIn, setLoggingIn] = useState(false);
+  const [loggingInGuest, setLoggingInGuest] = useState(false);
 
   const handleLogin = async () => {
     if (loggingIn) return;
@@ -118,7 +147,7 @@ export default function App() {
 
       if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
         toast.error(
-          '🔒 โดเมน Vercel/GitHub นี้ยังไม่ได้รับอนุญาตในโปรเจกต์ Firebase! กรุณาเพิ่มโดเมนของคุณในเมนู Firebase Console -> Authentication -> Settings -> Authorized domains ก่อนนะคะ',
+          '🔒 โดเมน Vercel/GitHub นี้ยังไม่ได้รับอนุญาตในโปรเจกต์ Firebase! ท่านสามารถคลิกเข้าใช้งานแบบผู้เยี่ยมชม (Guest Mode) เพื่อใช้งานทันทีผ่านโหมดจำลองเครื่องถิ่น (Sandbox) ได้ทันทีค่ะ',
           { id: toastId, duration: 15000 }
         );
       } else if (errorCode === 'auth/popup-blocked') {
@@ -130,6 +159,36 @@ export default function App() {
       }
     } finally {
       setLoggingIn(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    if (loggingInGuest) return;
+    setLoggingInGuest(true);
+    const toastId = toast.loading('กำลังเริ่มเชื่อมต่อผู้เข้าใช้งานชั่วคราว...');
+    try {
+      await loginAnonymously();
+      toast.success('เชื่อมต่อสำเร็จ! ยินดีต้อนรับเข้าสู่วิถีบำบัดจิตใจค่ะ 🤍', { id: toastId });
+    } catch (error: any) {
+      console.warn("Guest login server error, activating Sandbox Mode:", error);
+      // Fallback to local guest user
+      const localGuest = {
+        uid: 'local_guest',
+        displayName: 'สหายผู้เยี่ยมชม (Sandbox)',
+        email: 'guest@jaiguguru.org',
+        photoURL: null,
+        isAnonymous: true,
+      };
+      
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('current_user_email', localGuest.email);
+        window.localStorage.setItem('current_user_uid', localGuest.uid);
+      }
+      setUser(localGuest);
+      setHasConsented(true); // Auto consent in sandbox mode
+      toast.success('⚠️ เชื่อมต่อโหมดจำลองในเครื่องถิ่น (Sandbox Mode) สำเร็จและทำงานได้ตามปกติแล้วค่ะ!', { id: toastId, duration: 6000 });
+    } finally {
+      setLoggingInGuest(false);
     }
   };
 
@@ -162,17 +221,28 @@ export default function App() {
             <p className="text-slate-500 font-sans font-medium text-sm">ใจของฉัน ฉันรู้ใจฉันดี 🤍</p>
           </div>
           
-          <button
-            onClick={handleLogin}
-            disabled={loggingIn}
-            className="w-full py-4 px-6 bg-slate-900 text-white rounded-2xl font-medium flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6 animate-pulse" />
-            {loggingIn ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบด้วย Google'}
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={handleLogin}
+              disabled={loggingIn || loggingInGuest}
+              className="w-full py-4 px-6 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-800 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
+            >
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6 animate-pulse" />
+              {loggingIn ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบด้วย Google'}
+            </button>
 
-          <div className="p-3 bg-indigo-50/50 text-indigo-950 font-sans rounded-2xl text-[11px] leading-relaxed text-left border border-indigo-100/30">
-            📌 <strong>คำแนะนำการเผยแพร่ Vercel / GitHub:</strong> หากล็อกอินด้วย Google ไม่ติดบนเซิร์ฟเวอร์ของตนเอง ดำเนินการเพิ่มชื่อโดเมนของท่าน (เช่น <code>*.vercel.app</code>) เข้าสู่ <em>Firebase Console &gt; Authentication &gt; Settings &gt; Authorized domains</em> เพื่อเปิดรับสิทธิ์เชื่อมต่อที่ปลอดภัยสำเร็จทันทีค่ะ!
+            <button
+              onClick={handleGuestLogin}
+              disabled={loggingIn || loggingInGuest}
+              className="w-full py-3.5 px-6 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 border border-slate-200 active:scale-98"
+            >
+              🔑 เข้าใช้งานด่วนแบบผู้เยี่ยมชม (Guest Mode)
+            </button>
+          </div>
+
+          <div className="p-4 bg-indigo-50/50 text-indigo-950 font-sans rounded-2xl text-[11.5px] leading-relaxed text-left border border-indigo-100/30 space-y-1">
+            <p className="font-extrabold text-indigo-900 text-xs mb-1">🔑 คำแนะนำสำหรับการใช้อีเมลผู้ใช้งานอื่น:</p>
+            <p className="font-medium">ในกรณีที่คุณเข้าใช้ระบบด้วยชื่ออีเมลทั่วไปหรืออีเมลของผู้อื่น กรุณานำ <strong>Google Gemini API Key ส่วนตัวของคุณเอง</strong> มาวางติดตั้งในหน้าข้อมูลส่วนตัว (แท็บ Profile ขวาล่าง) เพื่อเข้าถึงชุดคำสั่งวิเคราะห์ประมวลความคิดและแอปพลิเคชันอย่างฉลาดและราบรื่นค่ะ</p>
           </div>
 
           <div className="space-y-2 pt-2 border-t border-slate-100">
@@ -264,14 +334,20 @@ export default function App() {
                   <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-1000" />
                   <div className="flex flex-col items-center space-y-6 relative z-10">
                     <div className="relative">
-                      <img src={user.photoURL || ''} className="w-24 h-24 rounded-full border-4 border-indigo-50 shadow-lg" />
+                      {user.photoURL ? (
+                        <img src={user.photoURL} className="w-24 h-24 rounded-full border-4 border-indigo-50 shadow-lg object-cover" />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 border-4 border-white shadow-lg flex items-center justify-center font-black text-2xl text-white">
+                          {(user.displayName || 'G')[0].toUpperCase()}
+                        </div>
+                      )}
                       <div className="absolute -bottom-1 -right-1 bg-indigo-600 p-2 rounded-full border-4 border-white">
                         <UserIcon className="w-4 h-4 text-white" />
                       </div>
                     </div>
                     <div className="text-center">
-                      <h2 className="text-2xl font-black text-slate-900 tracking-tight">{user.displayName}</h2>
-                      <p className="text-slate-400 text-sm font-medium">{user.email}</p>
+                      <h2 className="text-2xl font-black text-slate-900 tracking-tight">{user.displayName || 'สหายบำบัดจิตผู้เยี่ยมชม (Guest)'}</h2>
+                      <p className="text-slate-400 text-sm font-medium">{user.email || 'guest@jaiguguru.org'}</p>
                     </div>
                   </div>
                 </div>
