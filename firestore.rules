@@ -134,7 +134,7 @@ service cloud.firestore {
 
     match /appFeedback/{feedbackId} {
       allow create: if isSignedIn() && isValidAppFeedback(incoming()) && isValidId(feedbackId);
-      allow list, get: if isSignedIn() && request.auth.token.email == 'thannat2025@gmail.com' && request.auth.token.email_verified == true;
+      allow read: if isSignedIn() && request.auth.token.email == 'thannat2025@gmail.com';
     }
   }
 }

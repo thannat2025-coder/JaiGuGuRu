@@ -102,6 +102,37 @@ export default function App() {
     toast.success('ออกจากระบบสำเร็จ');
   };
 
+  const [loggingIn, setLoggingIn] = useState(false);
+
+  const handleLogin = async () => {
+    if (loggingIn) return;
+    setLoggingIn(true);
+    const toastId = toast.loading('กำลังเชื่อมต่อเพื่อเข้าสู่ระบบ...');
+    try {
+      await loginWithGoogle();
+      toast.success('เข้าสู่ระบบสำเร็จ!', { id: toastId });
+    } catch (error: any) {
+      console.error("Login error detailed:", error);
+      const errorCode = error?.code || '';
+      const errorMessage = error?.message || String(error);
+
+      if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
+        toast.error(
+          '🔒 โดเมน Vercel/GitHub นี้ยังไม่ได้รับอนุญาตในโปรเจกต์ Firebase! กรุณาเพิ่มโดเมนของคุณในเมนู Firebase Console -> Authentication -> Settings -> Authorized domains ก่อนนะคะ',
+          { id: toastId, duration: 15000 }
+        );
+      } else if (errorCode === 'auth/popup-blocked') {
+        toast.error('🚫 เบราว์เซอร์บล็อกหน้าต่างป๊อปอัพ กรุณาเปิดสิทธิเข้าถึงป๊อปอัพสำหรับหน้านี้แล้วลองอีกครั้งค่ะ', { id: toastId, duration: 6000 });
+      } else if (errorCode === 'auth/cancelled-popup-request' || errorCode === 'auth/popup-closed-by-user') {
+        toast.error('⚠️ ยกเลิกกระบวนการเปิดเข้าสู่ระบบแล้ว', { id: toastId, duration: 4000 });
+      } else {
+        toast.error(`❌ ข้อผิดพลาด: ${errorMessage || 'กรุณาลองใหม่อีกครั้ง'}`, { id: toastId, duration: 8000 });
+      }
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-50">
@@ -117,6 +148,7 @@ export default function App() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50/70 to-purple-100/50 flex flex-col items-center justify-center p-6 text-center">
+        <Toaster position="top-center" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -129,13 +161,20 @@ export default function App() {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">JaiGuGuRu (ใจกู...กูรู้)</h1>
             <p className="text-slate-500 font-sans font-medium text-sm">ใจของฉัน ฉันรู้ใจฉันดี 🤍</p>
           </div>
+          
           <button
-            onClick={() => loginWithGoogle()}
-            className="w-full py-4 px-6 bg-slate-900 text-white rounded-2xl font-medium flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors cursor-pointer"
+            onClick={handleLogin}
+            disabled={loggingIn}
+            className="w-full py-4 px-6 bg-slate-900 text-white rounded-2xl font-medium flex items-center justify-center gap-3 hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
-            เข้าสู่ระบบด้วย Google
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6 animate-pulse" />
+            {loggingIn ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบด้วย Google'}
           </button>
+
+          <div className="p-3 bg-indigo-50/50 text-indigo-950 font-sans rounded-2xl text-[11px] leading-relaxed text-left border border-indigo-100/30">
+            📌 <strong>คำแนะนำการเผยแพร่ Vercel / GitHub:</strong> หากล็อกอินด้วย Google ไม่ติดบนเซิร์ฟเวอร์ของตนเอง ดำเนินการเพิ่มชื่อโดเมนของท่าน (เช่น <code>*.vercel.app</code>) เข้าสู่ <em>Firebase Console &gt; Authentication &gt; Settings &gt; Authorized domains</em> เพื่อเปิดรับสิทธิ์เชื่อมต่อที่ปลอดภัยสำเร็จทันทีค่ะ!
+          </div>
+
           <div className="space-y-2 pt-2 border-t border-slate-100">
             <p className="text-[11px] text-slate-500 font-medium">
               © ลิขสิทธิ์ซอฟต์แวร์และการออกแบบเป็นของ <br/>
