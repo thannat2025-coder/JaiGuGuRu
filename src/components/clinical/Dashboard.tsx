@@ -71,6 +71,8 @@ export default function Dashboard({ user }: DashboardProps) {
   const [safetyPlanLogs, setSafetyPlanLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState<{ type: 'mood' | 'journal', data: any } | null>(null);
+  const [clinicalScreeningsList, setClinicalScreeningsList] = useState<any[]>([]);
+  const [demographics, setDemographics] = useState<any | null>(null);
   
   // Custom interactive dashboard states
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -117,6 +119,14 @@ export default function Dashboard({ user }: DashboardProps) {
           date: l.createdAt ? new Date(l.createdAt) : null
         })).reverse();
         setSafetyPlanLogs(decodedLogs);
+
+        const localScreenings = JSON.parse(localStorage.getItem(`clinical_screenings_${user.uid}`) || '[]');
+        setClinicalScreeningsList(localScreenings);
+
+        const localDemo = localStorage.getItem(`clinical_demo_${user.uid}`);
+        if (localDemo) {
+          setDemographics(JSON.parse(localDemo));
+        }
 
         const avg = moods.length > 0 
           ? moods.reduce((acc: number, curr: any) => acc + (curr.mood || 0), 0) / moods.length 
@@ -187,6 +197,23 @@ export default function Dashboard({ user }: DashboardProps) {
         date: doc.data().createdAt?.toDate()
       }));
       setSafetyPlanLogs(decodedLogs);
+
+      // Fetch research demographics doc
+      const demoRef = doc(db, 'users', user.uid, 'researchDemographics', 'current');
+      const demoSnap = await getDoc(demoRef);
+      if (demoSnap.exists()) {
+        setDemographics(demoSnap.data());
+      }
+
+      // Fetch clinical screenings list over the 8 checkpoints
+      const screenQ = query(collection(db, 'users', user.uid, 'screeningHistory'), orderBy('checkpointIndex', 'asc'));
+      const screenSnap = await getDocs(screenQ);
+      const screenings = screenSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        date: doc.data().createdAt?.toDate() || new Date()
+      }));
+      setClinicalScreeningsList(screenings);
 
       // Calculate Stats
       const avg = moods.length > 0 
@@ -831,6 +858,142 @@ export default function Dashboard({ user }: DashboardProps) {
           })}
           {moodLogs.length === 0 && (
             <p className="text-center text-slate-400 text-xs italic py-4">ยังไม่พบบันทึกประวัติสุขภาพใจเลย</p>
+          )}
+        </div>
+      </section>
+
+      {/* NEW: National Research Clinical Trial Registry & Progression Chart */}
+      <section className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 print:hidden space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-50 pb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-emerald-50 rounded-xl">
+              <HeartPulse className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-[15px] id-clinical-title text-slate-800">ผลวิเคราะห์การก้าวหน้าทางคลินิก (Clinical Progression Analytics)</h3>
+              <p className="text-[10px] text-slate-400 font-medium">สถิติวัดระดับสมดุลใจ DASS-21 & PHQ-A สะสมสูงสุด 8 รอบทดสอบเวชระเบียน</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              if (clinicalScreeningsList.length === 0) {
+                toast.error('ผู้เรียนยังไม่มีข้อมูลผลบันทึกเวชระเบียนแบบคัดกรองในขณะนี้ค่ะ ทำประเมินชุดแรกแผ่น Baseline ก่อนจัดส่งค่ะ');
+                return;
+              }
+              
+              const pCode = `Participant-JG-${user.uid?.substring(0, 5).toUpperCase()}`;
+              let csv = "========================================================\r\n";
+              csv += `ฐานข้อมูลวิจัยคัดกรองสุขภาพจิตสัมฤทธิ์ผล (Clinical Trial De-identified Raw Data) - JaiGuGuRu\r\n`;
+              csv += `ส่งออกข้อมูลเมื่อ: ${format(new Date(), 'yyyy-MM-dd HH:mm น.')}\r\n`;
+              csv += "========================================================\r\n\r\n";
+              
+              // Demographics Summary Header
+              csv += `--- ประวัติประชากรวิจัย De-identified ---\r\n`;
+              if (demographics) {
+                csv += `รหัสผู้เรียน (User ID): ${pCode}\r\n`;
+                csv += `เพศสภาพ (Gender): ${demographics.gender || 'N/A'}\r\n`;
+                csv += `อายุ (Age): ${demographics.age || 'N/A'} ปี\r\n`;
+                csv += `อาชีพ (Occupation): ${demographics.occupation || 'N/A'} ${demographics.studentYear ? `(${demographics.studentYear})` : ''}\r\n`;
+                csv += `จังหวัด (Province): ${demographics.province || 'N/A'}\r\n`;
+                csv += `โรคประจำตัว/จิตเวช (Illness): ${(demographics.medicalIllness || 'ไม่มี').replace(/"/g, '""')}\r\n`;
+                csv += `ยาจิตเวชที่ทานในปัจจุบัน (Medication): ${(demographics.psychiatricMedication || 'ไม่มี').replace(/"/g, '""')}\r\n\r\n`;
+              } else {
+                csv += `ผู้เรียนยังไม่ได้ยอมรับ Consent หรือลงทะเบียนประวัติตนเองแบบปิดบังชื่อในขณะนี้\r\n\r\n`;
+              }
+
+              // Scores Records
+              csv += `--- บันทึกคะแนนแบบคัดกรอง 8 ช่วงสัปดาห์ (Checkpoints Performance Scores) ---\r\n`;
+              csv += "ลำดับที่,รอบทดสอบ,วันที่บันทึก,DASS Depression (x2),DASS Anxiety (x2),DASS Stress (x2),PHQ-A Depression,BNSSI-AT มีทำร้ายตนเอง,BNSSI-AT ความอยากทำร้ายตนเอง,BNSSI-AT วิธีการทำ,BNSSI-AT ความถี่\r\n";
+              
+              clinicalScreeningsList.forEach((log, index) => {
+                const dateStr = log.createdAt ? format(new Date(log.createdAt), 'yyyy-MM-dd HH:mm') : 'N/A';
+                csv += `${index + 1},"${log.checkpointLabel}","${dateStr}",${log.dassDepression},${log.dassAnxiety},${log.dassStress},${log.phqScore},${log.hasNsi === true ? 'มี' : 'ไม่มี'},${log.nsiSeverity || 0},"${(log.nsiMethods || []).join('; ')}","${log.nsiFrequency || ''}"\r\n`;
+              });
+
+              const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.setAttribute("href", url);
+              link.setAttribute("download", `jaigugu_clinical_trial_dataset_${pCode}.csv`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              toast.success('ดาวน์โหลดฐานข้อมูลเวชระเบียนคัดกรองคลิกนิกสำเร็จค่ะ 💾');
+            }}
+            className="p-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-100 transition-all"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>ออกรายงานข้อมูลวิจัยรวม (Export De-identified Trial Dataset)</span>
+          </button>
+        </div>
+
+        {/* Screening Trend Graphics */}
+        <div className="space-y-4">
+          {clinicalScreeningsList.length > 0 ? (
+            <>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={clinicalScreeningsList.map((log) => ({
+                      checkpoint: log.checkpointLabel ? log.checkpointLabel.replace('ครั้งที่ ', 'ครั้ง ') : `รอบ ${log.checkpointIndex + 1}`,
+                      'DASS Depression': log.dassDepression || 0,
+                      'DASS Anxiety': log.dassAnxiety || 0,
+                      'DASS Stress': log.dassStress || 0,
+                      'PHQ-A': log.phqScore || 0,
+                    }))}
+                    margin={{ top: 15, right: 15, left: -25, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis 
+                      dataKey="checkpoint" 
+                      tick={{ fontSize: 8.5, fontWeight: 700, fill: '#64748b' }}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      domain={[0, 42]} 
+                      tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }}
+                      axisLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#0f172a', borderRadius: '1rem', border: 'none', color: '#fff', fontSize: '11px' }}
+                    />
+                    <Line type="monotone" dataKey="DASS Depression" stroke="#ec4899" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="DASS Anxiety" stroke="#fbbf24" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="DASS Stress" stroke="#f97316" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="PHQ-A" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Chart Legend Explanation */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-left">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-pink-500 rounded-full" />
+                  <span className="text-[10.5px] font-black text-slate-700">DASS Depression (ซึมเศร้า): 0-42</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-amber-400 rounded-full" />
+                  <span className="text-[10.5px] font-black text-slate-700">DASS Anxiety (วิตกกังวล): 0-42</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full" />
+                  <span className="text-[10.5px] font-black text-slate-700">DASS Stress (เครียด): 0-42</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                  <span className="text-[10.5px] font-black text-slate-700">PHQ-A (คัดกรองเศร้าเด็ก): 0-27</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="p-8 text-center text-slate-400 italic text-xs space-y-2 border border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+              <HeartPulse className="w-8 h-8 mx-auto text-slate-400 animate-pulse" />
+              <p>ผู้เรียนยังไม่พบบันทึกการคัดกรองสุขภาพ (DASS-21 Thai, PHQ-A, BNSSI-AT) สะสมเป็นระยะประเมินผล</p>
+              <p className="text-[10px] text-slate-400 leading-normal max-w-sm mx-auto font-sans">
+                การซ่อมเยียวยาจิตใจและประพฤติ CBT เช้าและเย็น จะช่วยให้คัดกรองอาการดิ่งตกและลดระดับโรคอาการอย่างสม่ำเสมอ เริ่มสอบได้ทางแท็บ "ทำแบบประเมินวิจัย" ได้เลยค่ะค่ะค่ะ
+              </p>
+            </div>
           )}
         </div>
       </section>

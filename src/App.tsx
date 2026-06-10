@@ -18,7 +18,8 @@ import {
   User as UserIcon,
   TrendingUp,
   LogOut,
-  AlertTriangle
+  AlertTriangle,
+  ClipboardCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster, toast } from 'react-hot-toast';
@@ -29,6 +30,8 @@ import CBTDojo from '@/src/components/clinical/CBTDojo';
 import FirstAidKit from '@/src/components/clinical/FirstAidKit';
 import ChillZone from '@/src/components/clinical/ChillZone';
 import Dashboard from '@/src/components/clinical/Dashboard';
+import BehaviorActivation from '@/src/components/clinical/BehaviorActivation';
+import ClinicalScreening from '@/src/components/clinical/ClinicalScreening';
 import Home from '@/src/components/Home';
 import PrivacyConsent from '@/src/components/PrivacyConsent';
 import ReminderSettings from '@/src/components/ReminderSettings';
@@ -36,7 +39,7 @@ import BrandLogo from '@/src/components/BrandLogo';
 import GeminiApiKeySettings from '@/src/components/GeminiApiKeySettings';
 import AppEvaluation from '@/src/components/AppEvaluation';
 
-type Tab = 'home' | 'mood' | 'chill' | 'safety' | 'aid' | 'dojo' | 'dashboard' | 'profile';
+type Tab = 'home' | 'mood' | 'chill' | 'safety' | 'aid' | 'dojo' | 'dashboard' | 'profile' | 'activation' | 'screening';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -328,6 +331,18 @@ export default function App() {
             )}
             {activeTab === 'aid' && <FirstAidKit />}
             {activeTab === 'chill' && <ChillZone />}
+            {activeTab === 'activation' && (
+              <BehaviorActivation 
+                user={user} 
+                onBackToHome={() => setActiveTab('home')} 
+              />
+            )}
+            {activeTab === 'screening' && (
+              <ClinicalScreening 
+                user={user} 
+                onBackToHome={() => setActiveTab('home')} 
+              />
+            )}
             {activeTab === 'profile' && (
               <div className="space-y-10 pb-10">
                 <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 relative overflow-hidden group">
@@ -409,6 +424,12 @@ export default function App() {
             onClick={() => setActiveTab('dojo')} 
             icon={<Brain className="w-5 h-5" />} 
             label="ห้องเรียนคิด" 
+          />
+          <NavButton 
+            active={activeTab === 'screening'} 
+            onClick={() => setActiveTab('screening')} 
+            icon={<ClipboardCheck className="w-5 h-5" />} 
+            label="คัดกรองวิจัย" 
           />
           <NavButton 
             active={activeTab === 'dashboard'} 

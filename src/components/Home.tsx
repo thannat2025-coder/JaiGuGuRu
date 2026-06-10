@@ -13,7 +13,8 @@ import {
   Bell,
   Sparkles,
   ArrowRight,
-  Info
+  Info,
+  ClipboardCheck
 } from 'lucide-react';
 import { db } from '@/src/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -855,6 +856,25 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
               <p className="text-[10px] text-slate-400">ผ่อนคลายทันที</p>
             </div>
           </button>
+
+          <button 
+            type="button"
+            onClick={() => setActiveTab('activation')}
+            className="col-span-2 flex items-center justify-between p-4.5 bg-gradient-to-r from-orange-550/10 to-amber-550/10 hover:from-orange-550/15 hover:to-amber-550/15 border border-orange-100/70 rounded-[2rem] shadow-sm transition-all group text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="p-2.5 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl text-white group-hover:scale-110 transition-transform shadow-sm shadow-orange-100">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-[13.5px] font-black text-slate-850">ตารางกระตุ้นพฤติกรรม (BA)</p>
+                <p className="text-[10px] text-slate-500 font-sans font-medium">สยบความหม่นหมอง อับจนหนทาง ด้วยวิถี "Outside-In"</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-black bg-orange-600 text-white px-3.5 py-2.5 rounded-2xl hover:bg-orange-700 active:scale-95 transition-all text-center">
+              เริ่มซ่อมใจ 🏃‍♂️
+            </span>
+          </button>
         </div>
       </section>
 
@@ -927,6 +947,25 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
                 <p className="text-[9px] text-white/70 bg-white/10 mx-auto w-fit px-3 py-1 rounded-full uppercase tracking-widest mt-2 font-black">
                   ระดับความเข้มข้น: {lastEmotionDetails?.mood || 5}/10
                 </p>
+
+                {lastEmotionDetails?.quadrant === 'low-negative' && (
+                  <div className="mt-4 p-4 border border-white/20 bg-white/10 rounded-[2rem] text-left space-y-2.5 max-w-xs mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-amber-300">
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>ขยับพฤติกรรมกระตุ้นใจกันค่ะ (BA)</span>
+                    </div>
+                    <p className="text-[10.5px] text-slate-100 leading-relaxed font-sans font-medium">
+                      สหายคะ... ตรวจพบลมมรสุมใจช่วงหมดไฟ คาดเดาว่าสมองอาจพยายามดึงให้คุณนอนนิ่งๆ พรุ่งนี้เรามาทดลองปูทางให้แดดส่องด้วยวิธี <strong>"ชาร์จพฤติกรรมบำบัด (Outside-In)"</strong> กันนะคะ! ทำเป้าเล็กร่วมกันปราบเศร้ากันค่ะ 🤍
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('activation')}
+                      className="w-full py-2 bg-gradient-to-r from-amber-400 to-orange-400 text-indigo-950 font-black text-[11px] rounded-xl hover:scale-[1.02] active:scale-95 transition-all text-center cursor-pointer shadow-md shadow-orange-950/20"
+                    >
+                      เข้าสู่ตารางกิจกรรมคลายเศร้า →
+                    </button>
+                  </div>
+                )}
               </div>
               <button
                 type="button"
@@ -1198,6 +1237,15 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
             delay={0.4}
             onClick={() => setActiveTab('safety')}
             description="ออกแบบคัมภีร์รับมือกับพายุอารมณ์เพื่อรับประกันความพ้นขีดอันตราย"
+          />
+          <ModuleCardV2 
+            title="คัดกรองงานวิจัย" 
+            label="Clinical Trials"
+            icon={<ClipboardCheck className="w-6 h-6 text-emerald-600" />} 
+            color="bg-emerald-50/50 border-emerald-100/60 p-5"
+            delay={0.5}
+            onClick={() => setActiveTab('screening')}
+            description="กรอกแบบฟอร์มยินยอมเพื่อวิจัยทางการแพทย์ และวัดผลรักษาสะสมครั้งที่ 1 - 8"
           />
         </div>
       </section>

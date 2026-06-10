@@ -67,6 +67,19 @@ service cloud.firestore {
              (data.get('createdAt', request.time) is timestamp);
     }
 
+    function isValidBehaviorActivation(data) {
+      return data.keys().hasAll(['userId', 'title', 'status', 'pleasure', 'mastery']) &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() <= 200 &&
+             data.status in ['planned', 'completed', 'skipped'] &&
+             data.pleasure is number && data.pleasure >= 0 && data.pleasure <= 10 &&
+             data.mastery is number && data.mastery >= 0 && data.mastery <= 10 &&
+             (data.get('category', '') is string && data.get('category', '').size() <= 100) &&
+             (data.get('scheduledTime', '') is string && data.get('scheduledTime', '').size() <= 100) &&
+             (data.get('notes', '') is string && data.get('notes', '').size() <= 1000) &&
+             (data.get('createdAt', request.time) is timestamp);
+    }
+
     function isValidReminder(data) {
       return data.keys().hasAll(['userId', 'title', 'type', 'time', 'days', 'enabled']) &&
              data.userId == request.auth.uid &&
@@ -88,6 +101,22 @@ service cloud.firestore {
              data.privacyFeeling is number && data.privacyFeeling >= 0 && data.privacyFeeling <= 5 &&
              data.comment is string && data.comment.size() <= 5000 &&
              data.createdAt == request.time;
+    }
+
+    function isValidResearchDemographic(data) {
+      return data.keys().hasAll(['userId', 'consented', 'gender', 'age', 'occupation', 'province', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.consented is bool &&
+             data.gender is string && data.gender.size() <= 100 &&
+             data.age is number && data.age >= 0 && data.age <= 150 &&
+             data.occupation is string && data.occupation.size() <= 200 &&
+             data.province is string && data.province.size() <= 150;
+    }
+
+    function isValidClinicalScreening(data) {
+      return data.keys().hasAll(['userId', 'checkpointIndex', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.checkpointIndex is number && data.checkpointIndex >= 0 && data.checkpointIndex <= 7;
     }
 
     // --- Collection Matches ---
@@ -125,11 +154,30 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
     }
 
+    match /users/{userId}/behaviorActivation/{baId} {
+      allow list, get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidBehaviorActivation(incoming());
+      allow update: if isOwner(userId) && isValidBehaviorActivation(incoming());
+      allow delete: if isOwner(userId);
+    }
+
     match /users/{userId}/reminders/{reminderId} {
       allow list, get: if isOwner(userId);
       allow create: if isOwner(userId) && isValidReminder(incoming());
       allow update: if isOwner(userId) && isValidReminder(incoming());
       allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/researchDemographics/{docId} {
+      allow list, get: if isOwner(userId) || (isSignedIn() && request.auth.token.email == 'thannat2025@gmail.com');
+      allow create: if isOwner(userId) && isValidResearchDemographic(incoming());
+      allow update: if isOwner(userId) && isValidResearchDemographic(incoming());
+    }
+
+    match /users/{userId}/screeningHistory/{screeningId} {
+      allow list, get: if isOwner(userId) || (isSignedIn() && request.auth.token.email == 'thannat2025@gmail.com');
+      allow create: if isOwner(userId) && isValidClinicalScreening(incoming());
+      allow update: if isOwner(userId) && isValidClinicalScreening(incoming());
     }
 
     match /appFeedback/{feedbackId} {

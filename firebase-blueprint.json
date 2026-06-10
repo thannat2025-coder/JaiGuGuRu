@@ -76,6 +76,23 @@
       },
       "required": ["userId", "title", "type", "time", "days", "enabled"]
     },
+    "BehaviorActivation": {
+      "title": "Behavioral Activation Activity",
+      "description": "Activities scheduled and rated for Pleasure & Mastery to combat depression",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "scheduledTime": { "type": "string" },
+        "status": { "type": "string", "enum": ["planned", "completed", "skipped"] },
+        "pleasure": { "type": "number", "minimum": 0, "maximum": 10 },
+        "mastery": { "type": "number", "minimum": 0, "maximum": 10 },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "status", "pleasure", "mastery"]
+    },
     "SafetyPlanLog": {
       "title": "Safety Plan Log",
       "description": "Logs for daily safety confirmations and safety plan updates",
@@ -104,12 +121,61 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "userName", "email", "easeOfUse", "cbtDojo", "mentalFirstAid", "privacyFeeling", "createdAt"]
+    },
+    "ResearchDemographic": {
+      "title": "Research Demographic and Consent Information",
+      "description": "De-identified demographic registration specifically for mental health clinical research purposes",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "consented": { "type": "boolean" },
+        "consentDate": { "type": "string", "format": "date-time" },
+        "gender": { "type": "string" },
+        "age": { "type": "number" },
+        "occupation": { "type": "string" },
+        "studentYear": { "type": "string" },
+        "province": { "type": "string" },
+        "medicalIllness": { "type": "string" },
+        "psychiatricMedication": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "consented", "gender", "age", "occupation", "province", "createdAt"]
+    },
+    "ClinicalScreening": {
+      "title": "Clinical Mental Health Screening Scores",
+      "description": "Tracking patient clinical progression using DASS-21, PHQ-A, and BNSSI-AT scales over 8 checkpoints",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "checkpointIndex": { "type": "number" },
+        "checkpointLabel": { "type": "string" },
+        "dassDepression": { "type": "number" },
+        "dassAnxiety": { "type": "number" },
+        "dassStress": { "type": "number" },
+        "phqScore": { "type": "number" },
+        "hasNsi": { "type": "boolean" },
+        "nsiMethods": { "type": "array" },
+        "nsiFrequency": { "type": "string" },
+        "nsiReasons": { "type": "array" },
+        "nsiSeverity": { "type": "number" },
+        "rawAnswers": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "checkpointIndex", "createdAt"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "Individual user profiles"
+    },
+    "/users/{userId}/researchDemographics/{docId}": {
+      "schema": "ResearchDemographic",
+      "description": "Research clinical demographics and consent details"
+    },
+    "/users/{userId}/screeningHistory/{screeningId}": {
+      "schema": "ClinicalScreening",
+      "description": "Patient progress tracker of clinical evaluations across 8 periodic check-ins"
     },
     "/users/{userId}/reminders/{reminderId}": {
       "schema": "Reminder",
@@ -130,6 +196,10 @@
     "/users/{userId}/moodLogs/{logId}": {
       "schema": "MoodLog",
       "description": "Stress and mood logs"
+    },
+    "/users/{userId}/behaviorActivation/{baId}": {
+      "schema": "BehaviorActivation",
+      "description": "User behavioral activation logs including scheduled items, pleasure and mastery ratings"
     },
     "/appFeedback/{feedbackId}": {
       "schema": "AppFeedback",
