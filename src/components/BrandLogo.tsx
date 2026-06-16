@@ -97,10 +97,10 @@ export default function BrandLogo({ size = 'md', showText = false, lightText = f
       {showText && (
         <div className="flex flex-col text-left">
           <span className={`font-black tracking-tight leading-none ${size === 'lg' ? 'text-3xl' : size === 'md' ? 'text-xl' : 'text-base'} ${lightText ? 'text-white' : 'text-slate-900'}`}>
-            JaiGuGuRu
+            JaiGu (GuRu.D)
           </span>
           <span className={`font-medium tracking-wide ${size === 'lg' ? 'text-sm mt-1.5' : 'text-[10px] mt-0.5'} ${lightText ? 'text-indigo-200' : 'text-slate-400 font-sans'}`}>
-            ใจกู...กูรู้
+            ใจกุ (กูรู ดี)
           </span>
         </div>
       )}

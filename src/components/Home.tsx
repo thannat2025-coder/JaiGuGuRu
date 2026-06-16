@@ -14,7 +14,8 @@ import {
   Sparkles,
   ArrowRight,
   Info,
-  ClipboardCheck
+  ClipboardCheck,
+  BookOpen
 } from 'lucide-react';
 import { db } from '@/src/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -824,6 +825,134 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
         </div>
       </section>
 
+      {/* Dynamic Cloud Mascot "น้องกุ" (Gu) */}
+      <section className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -z-10" />
+        <div className="flex items-center gap-5 relative z-10">
+          {/* Cloud Mascot Illustration */}
+          <motion.div
+            animate={{
+              y: [0, -6, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="flex-shrink-0 cursor-pointer relative"
+            onClick={() => {
+              const cloudQuotes = [
+                "เฮ้ย! ความคิดแย่ๆ มันก็แค่เมฆหมอก เดี๋ยวก็พัดผ่านไป เชื่อกุเหอะ! 😉",
+                "สีกุจะสลับตามอารมณ์มึงนะเว้ย มารีเซ็ตอารมณ์กับกุได้ตลอดเวลา!",
+                "ใจมึง มึงรู้ดีที่สุด! อย่าเกรงใจคนอื่นจนข่มเหงใจตัวเองดิ!",
+                "หายใจยาวๆ สักทีไหมวัยรุ่น? มารดน้ำดอกไม้ในใจกันหน่อย สู้ๆ เว้ย! 🌻",
+                "ความคิดลบอัตโนมัติมันหลอกเราได้ แต่มึงฉลาดพอจะเอามันลงได้ด้วยสติแหละ!",
+                "เก่งพะยะค่ะ! วันนี้รักษาสถิติได้เท่มาก ยืดหยุ่นใจลุยต่อกันเล้ย!"
+              ];
+              const randomQ = cloudQuotes[Math.floor(Math.random() * cloudQuotes.length)];
+              toast(randomQ, {
+                icon: '☁️',
+                duration: 5000,
+                style: {
+                  borderRadius: '1.5rem',
+                  background: '#0f172a',
+                  color: '#fff',
+                  border: '1px solid #334155',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                }
+              });
+            }}
+          >
+            {/* Cloud shape using SVG or Tailwind rounded shapes */}
+            <div className="relative w-20 h-16 flex items-center justify-center">
+              {/* Outer Cloud glow based on mood */}
+              <div className={`absolute inset-0 rounded-full blur-xl opacity-60 animate-pulse transition-colors duration-1000 ${
+                lastEmotionDetails?.quadrant === 'high-positive' || lastEmotionDetails?.quadrant === 'low-positive'
+                  ? 'bg-amber-405'
+                  : lastEmotionDetails?.quadrant === 'high-negative'
+                  ? 'bg-rose-505'
+                  : lastEmotionDetails?.quadrant === 'low-negative'
+                  ? 'bg-sky-505'
+                  : 'bg-emerald-405'
+              }`} />
+              
+              {/* Cloud Body SVG */}
+              <svg viewBox="0 0 100 60" className={`w-20 h-16 relative z-10 transition-colors duration-1000 ${
+                lastEmotionDetails?.quadrant === 'high-positive' || lastEmotionDetails?.quadrant === 'low-positive'
+                  ? 'fill-amber-305 text-amber-800'
+                  : lastEmotionDetails?.quadrant === 'high-negative'
+                  ? 'fill-rose-300 text-rose-800'
+                  : lastEmotionDetails?.quadrant === 'low-negative'
+                  ? 'fill-sky-305 text-sky-800'
+                  : 'fill-emerald-200 text-emerald-800'
+              }`}>
+                <path d="M 20,40 A 15,15 0 0,1 22,20 A 22,22 0 0,1 50,12 A 22,22 0 0,1 78,20 A 15,15 0 0,1 80,40 A 10,10 0 0,1 70,50 L 30,50 A 10,10 0 0,1 20,40 z" />
+                {/* Smiley Face / Cloud emotion */}
+                {lastEmotionDetails?.quadrant === 'low-negative' ? (
+                  // Reflecting/Sad face
+                  <g className="stroke-[3] stroke-slate-700 fill-none">
+                    <path d="M 38,28 A 3,3 0 0,1 44,28" />
+                    <path d="M 56,28 A 3,3 0 0,1 62,28" />
+                    <path d="M 45,42 Q 50,37 55,42" />
+                  </g>
+                ) : lastEmotionDetails?.quadrant === 'high-negative' ? (
+                  // Flushed/Overwhelmed face
+                  <g className="stroke-[3] stroke-slate-800 fill-none">
+                    <line x1="38" y1="24" x2="44" y2="28" />
+                    <line x1="44" y1="24" x2="38" y2="28" />
+                    <line x1="56" y1="28" x2="62" y2="24" />
+                    <line x1="62" y1="28" x2="56" y2="24" />
+                    <line x1="45" y1="38" x2="55" y2="38" className="stroke-[3.5]" />
+                  </g>
+                ) : (
+                  // Happy/Neutral cloud face
+                  <g className="stroke-[3] stroke-slate-700 fill-none">
+                    <circle cx="40" cy="28" r="1.5" className="fill-slate-700" />
+                    <circle cx="60" cy="28" r="1.5" className="fill-slate-700" />
+                    <path d="M 44,38 Q 50,44 56,38" className="stroke-[2.5]" />
+                  </g>
+                )}
+              </svg>
+              {/* Cute little dialogue bubble hint */}
+              <span className="absolute -bottom-1 bg-amber-400 text-slate-905 px-2 py-0.5 rounded-full text-[8px] font-black tracking-tighter uppercase whitespace-nowrap z-20 shadow-sm border border-white">
+                จิ้มคุยกับกุ ☁️
+              </span>
+            </div>
+          </motion.div>
+
+          <div className="space-y-1 my-auto text-left">
+            <h4 className="text-sm font-black text-amber-300 flex items-center gap-1.5 leading-snug">
+              <span>บัดดี้ก้อนเมฆ "น้องกุ" (Gu Mascot)</span>
+              <span className={`text-[8.5px] px-2 py-0.5 rounded-md font-bold uppercase transition-all ${
+                lastEmotionDetails?.quadrant === 'high-positive' || lastEmotionDetails?.quadrant === 'low-positive'
+                  ? 'bg-amber-400 text-slate-905 animate-bounce'
+                  : lastEmotionDetails?.quadrant === 'high-negative'
+                  ? 'bg-rose-500 text-white'
+                  : lastEmotionDetails?.quadrant === 'low-negative'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-emerald-400 text-slate-900'
+              }`}>
+                {lastEmotionDetails?.quadrant === 'high-positive' || lastEmotionDetails?.quadrant === 'low-positive'
+                  ? 'สดใสมีพลัง ☀️'
+                  : lastEmotionDetails?.quadrant === 'high-negative'
+                  ? 'ตื่นตัวระนาบใจ ⚡'
+                  : lastEmotionDetails?.quadrant === 'low-negative'
+                  ? 'กำลังทบทวนคิด 💙'
+                  : 'พร้อมเป็นที่พึ่ง 🍀'}
+              </span>
+            </h4>
+            <p className="text-xs text-slate-300 leading-relaxed font-semibold max-w-[250px]">
+              {lastEmotionDetails?.quadrant === 'low-negative'
+                ? "เห็นสีน้ำเงินของกุไหม? กุกำลังใจจดใจจ่อประคองความหมองไปพร้อมมึงนะเว้ย ค่อยๆ ถอยสกัดความคิดดึ่งลบกันเถอะ"
+                : lastEmotionDetails?.quadrant === 'high-negative'
+                ? "มู้ดแดงเดือดพล่าน! ดึงสติหายใจลึกๆ 4 จังหวะกับกุก่อน คลื่น Amygdala จะได้สงบเย็นลงนะเพื่อน"
+                : "ยินดีต้อนรับสู่แอปใจกุ (กูรู้ ดี) ซ่อนนัยว่า 'ใจกู กูรู้ดี' เพื่อคืนพลังอำนาจนำทางชีวิตสู่เบื้องลึกกมลจิตวิญญาณมึงเอง!"}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Quick Actions */}
       <section className="space-y-3">
         <h3 className="font-black text-slate-800 uppercase tracking-[2px] text-[10px] ml-1">Quick Actions</h3>
@@ -1198,7 +1327,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
       {/* Main Grid Actions */}
       <section className="space-y-5">
         <div className="flex items-center justify-between ml-1">
-          <h3 className="font-black text-slate-800 uppercase tracking-[2px] text-[10px]">ใจกู...กูรู้ Explorer ✨</h3>
+          <h3 className="font-black text-slate-800 uppercase tracking-[2px] text-[10px]">ใจกุ (GuRu.D) Explorer ✨</h3>
           <span className="text-[9px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-black">Self-Awareness Map</span>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -1247,6 +1376,15 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
             onClick={() => setActiveTab('screening')}
             description="กรอกแบบฟอร์มยินยอมเพื่อวิจัยทางการแพทย์ และวัดผลรักษาสะสมครั้งที่ 1 - 8"
           />
+          <ModuleCardV2 
+            title="วิชาการแพทย์ CBT บำบัด" 
+            label="CBT Clinical & Science"
+            icon={<BookOpen className="w-6 h-6 text-purple-600" />} 
+            color="bg-purple-50/50 border-purple-100/60 p-5"
+            delay={0.6}
+            onClick={() => setActiveTab('presentation')}
+            description="เจาะลึกปรัชญาและหลักทฤษฎี CBT แนวทางบำบัดซึมเศร้า วิตกกังวล และต้านกลุ่มพฤติกรรมทำร้ายตัวเองอย่างมีหลักฐานทางวิทยาศาสตร์อ้างอิงชัดแจ้ง"
+          />
         </div>
       </section>
 
@@ -1266,7 +1404,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
           </div>
           
           <p className="text-slate-400 text-sm leading-relaxed max-w-[280px]">
-            JaiGuGuRu (ใจกู...กูรู้) AI พร้อมฟังทุกเรื่องของคุณ ผ่านการฝึกฝนด้วยหลักจิตวิทยา ปลอดภัย และเป็นความลับ 100%
+            JaiGu (ใจกุ กูรูดี) AI พร้อมฟังทุกเรื่องของคุณ ผ่านการฝึกฝนด้วยหลักจิตวิทยา ปลอดภัย และเป็นความลับ 100%
           </p>
 
           <button 

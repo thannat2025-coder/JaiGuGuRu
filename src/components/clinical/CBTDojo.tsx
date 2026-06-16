@@ -332,7 +332,7 @@ export default function CBTDojo({ user, onEmergencyTrigger, onBackToHome }: { us
                 <div className="w-16 h-16 bg-blue-100 rounded-3xl flex items-center justify-center mx-auto">
                   <MessageCircle className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="font-bold text-lg">ปรึกษา JaiGuGuRu AI</h3>
+                <h3 className="font-bold text-lg">ปรึกษา JaiGu (GuRu.D) AI</h3>
                 <p className="text-slate-500 text-sm max-w-[200px] mx-auto">ถามอะไรก็ได้ที่คุณอยากรู้ หรือเล่าเรื่องกังวลใจให้ฟังได้นะ</p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {['นอนไม่หลับทำยังไง?', 'วิธีจัดการความโกรธ', 'CBT คืออะไร?'].map(q => (

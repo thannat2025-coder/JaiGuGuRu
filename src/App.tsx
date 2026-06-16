@@ -32,6 +32,7 @@ import ChillZone from '@/src/components/clinical/ChillZone';
 import Dashboard from '@/src/components/clinical/Dashboard';
 import BehaviorActivation from '@/src/components/clinical/BehaviorActivation';
 import ClinicalScreening from '@/src/components/clinical/ClinicalScreening';
+import ClinicalPresentation from '@/src/components/clinical/ClinicalPresentation';
 import Home from '@/src/components/Home';
 import PrivacyConsent from '@/src/components/PrivacyConsent';
 import ReminderSettings from '@/src/components/ReminderSettings';
@@ -39,7 +40,7 @@ import BrandLogo from '@/src/components/BrandLogo';
 import GeminiApiKeySettings from '@/src/components/GeminiApiKeySettings';
 import AppEvaluation from '@/src/components/AppEvaluation';
 
-type Tab = 'home' | 'mood' | 'chill' | 'safety' | 'aid' | 'dojo' | 'dashboard' | 'profile' | 'activation' | 'screening';
+type Tab = 'home' | 'mood' | 'chill' | 'safety' | 'aid' | 'dojo' | 'dashboard' | 'profile' | 'activation' | 'screening' | 'presentation';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -47,6 +48,45 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [emergencyMode, setEmergencyMode] = useState(false);
   const [hasConsented, setHasConsented] = useState<boolean | null>(null);
+  
+  // States for automatic API Key Sync Consent
+  const [pendingApiKey, setPendingApiKey] = useState<string | null>(null);
+  const [showApiConsent, setShowApiConsent] = useState(false);
+
+  // Guest restriction helper
+  const isVisitor = user?.isAnonymous || user?.uid === 'local_guest' || user?.uid?.startsWith('local_') || !user?.email || user?.email === 'guest@jaiguguru.org';
+
+  const isTabRestricted = (tab: Tab) => {
+    if (!isVisitor) return false;
+    return !['home', 'mood', 'safety', 'profile'].includes(tab);
+  };
+
+  const handleTabClick = (tab: Tab) => {
+    if (isTabRestricted(tab)) {
+      toast.error('🔒 โหมดผู้เยี่ยมชมจำกัดการเข้าใช้เฉพาะ "เช็คอินอารมณ์" และ "บันทึกแผนปลอดภัย" เท่านั้น กรุณาเข้าสู่ระบบผ่าน Google เพื่อสัมผัสวิถีรักษาจิตด้วย CBT เต็มรูปแบบเชิงรณรงค์ค่ะ 🤍', {
+        duration: 6000,
+        icon: '🔒'
+      });
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  const handleApiConnectionConsent = (consent: boolean) => {
+    if (!user) return;
+    if (consent && pendingApiKey) {
+      window.localStorage.setItem(`custom_gemini_api_key_${user.uid}`, pendingApiKey);
+      window.localStorage.setItem(`custom_gemini_api_key_consented_${user.uid}`, 'true');
+      toast.success('🔌 เชื่อมต่อ Google Gemini API Key ของคุณแบบอัตโนมัติเรียบร้อยแล้วค่ะ! 🤍 พร้อมวิเคราะห์จิตใจและทัศนคติลึกซึ้ง');
+    } else {
+      window.localStorage.setItem(`custom_gemini_api_key_consented_${user.uid}`, 'false');
+      toast('คุณสลัดสิทธิ์เชื่อมโยงคีย์โดยอัตโนมัติ คุณยังสามารถระบุคีย์ด้วยตนเองได้ในสไลด์เพจข้อมูลส่วนตัวค่ะ', {
+        icon: '🔑'
+      });
+    }
+    setPendingApiKey(null);
+    setShowApiConsent(false);
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -74,11 +114,26 @@ export default function App() {
           window.localStorage.setItem('current_user_email', u.email || '');
           window.localStorage.setItem('current_user_uid', u.uid);
         }
-        // Check for consent in Firestore
+        // Check for consent and user settings in Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', u.uid));
-          if (userDoc.exists() && userDoc.data().privacyConsent) {
-            setHasConsented(true);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.privacyConsent) {
+              setHasConsented(true);
+            } else {
+              setHasConsented(false);
+            }
+
+            // Detect remote API key and check consent
+            if (data.geminiApiKey) {
+              const localKey = window.localStorage.getItem(`custom_gemini_api_key_${u.uid}`);
+              const alreadyConsented = window.localStorage.getItem(`custom_gemini_api_key_consented_${u.uid}`) === 'true';
+              if (!alreadyConsented || localKey !== data.geminiApiKey) {
+                setPendingApiKey(data.geminiApiKey);
+                setShowApiConsent(true);
+              }
+            }
           } else {
             setHasConsented(false);
           }
@@ -114,7 +169,7 @@ export default function App() {
         displayName: user.displayName,
       }, { merge: true });
       setHasConsented(true);
-      toast.success('ขอบคุณมากที่ไว้วางใจ JaiGuGuRu นะ');
+      toast.success('ขอบคุณมากที่ไว้วางใจ JaiGu (GuRu.D) นะ');
     } catch (error) {
       console.error("Error saving consent:", error);
       toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
@@ -220,8 +275,8 @@ export default function App() {
             <BrandLogo size="lg" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">JaiGuGuRu (ใจกู...กูรู้)</h1>
-            <p className="text-slate-500 font-sans font-medium text-sm">ใจของฉัน ฉันรู้ใจฉันดี 🤍</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">JaiGu (GuRu.D) ใจกุ (กูรู ดี)</h1>
+            <p className="text-slate-500 font-sans font-semibold text-xs leading-relaxed">คำว่า "ใจกุ (กูรู ดี)" ซ่อนความหมายว่า "ใจกู กูรู้ดี" ดึงพลังกลับคืนมาสู่ตัวเอง เพราะ CBT คือการเรียนรู้เพื่อเป็นกูรูเยียวยาตัวเอง 🤍</p>
           </div>
           
           <div className="space-y-3">
@@ -287,13 +342,21 @@ export default function App() {
           >
             <ShieldAlert className="w-5 h-5" />
           </button>
-          {user.photoURL && (
+          {user?.photoURL ? (
             <img 
               src={user.photoURL} 
               alt="Profile" 
-              className="w-8 h-8 rounded-full border border-slate-200"
-              onClick={() => setActiveTab('profile')}
+              className="w-8 h-8 rounded-full border border-slate-200 cursor-pointer object-cover hover:opacity-85 transition-opacity"
+              onClick={() => handleTabClick('profile')}
             />
+          ) : (
+            <button
+              onClick={() => handleTabClick('profile')}
+              className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-600 transition-colors cursor-pointer"
+              title="Profile & Settings"
+            >
+              <UserIcon className="w-5 h-5" />
+            </button>
           )}
         </div>
       </header>
@@ -308,14 +371,14 @@ export default function App() {
             exit={{ opacity: 0, x: -10 }}
             transition={{ duration: 0.2 }}
           >
-            {activeTab === 'home' && <Home user={user} setActiveTab={setActiveTab} />}
-            {activeTab === 'mood' && <Home user={user} setActiveTab={setActiveTab} initialShowMoodOnly={true} />}
+            {activeTab === 'home' && <Home user={user} setActiveTab={handleTabClick} />}
+            {activeTab === 'mood' && <Home user={user} setActiveTab={handleTabClick} initialShowMoodOnly={true} />}
             {activeTab === 'safety' && (
               <SafetyPlan 
                 user={user} 
                 isEmergency={emergencyMode} 
                 resetEmergency={() => setEmergencyMode(false)} 
-                onBackToHome={() => setActiveTab('home')} 
+                onBackToHome={() => handleTabClick('home')} 
               />
             )}
             {activeTab === 'dashboard' && <Dashboard user={user} />}
@@ -323,10 +386,10 @@ export default function App() {
               <CBTDojo 
                 user={user} 
                 onEmergencyTrigger={() => { 
-                  setActiveTab('safety'); 
+                  handleTabClick('safety'); 
                   setEmergencyMode(true); 
                 }} 
-                onBackToHome={() => setActiveTab('home')}
+                onBackToHome={() => handleTabClick('home')}
               />
             )}
             {activeTab === 'aid' && <FirstAidKit />}
@@ -334,13 +397,18 @@ export default function App() {
             {activeTab === 'activation' && (
               <BehaviorActivation 
                 user={user} 
-                onBackToHome={() => setActiveTab('home')} 
+                onBackToHome={() => handleTabClick('home')} 
               />
             )}
             {activeTab === 'screening' && (
               <ClinicalScreening 
                 user={user} 
-                onBackToHome={() => setActiveTab('home')} 
+                onBackToHome={() => handleTabClick('home')} 
+              />
+            )}
+            {activeTab === 'presentation' && (
+              <ClinicalPresentation 
+                onBackToHome={() => handleTabClick('home')} 
               />
             )}
             {activeTab === 'profile' && (
@@ -349,11 +417,11 @@ export default function App() {
                   <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-1000" />
                   <div className="flex flex-col items-center space-y-6 relative z-10">
                     <div className="relative">
-                      {user.photoURL ? (
+                      {user?.photoURL ? (
                         <img src={user.photoURL} className="w-24 h-24 rounded-full border-4 border-indigo-50 shadow-lg object-cover" />
                       ) : (
                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 border-4 border-white shadow-lg flex items-center justify-center font-black text-2xl text-white">
-                          {(user.displayName || 'G')[0].toUpperCase()}
+                          {(user?.displayName || 'G')[0].toUpperCase()}
                         </div>
                       )}
                       <div className="absolute -bottom-1 -right-1 bg-indigo-600 p-2 rounded-full border-4 border-white">
@@ -361,21 +429,31 @@ export default function App() {
                       </div>
                     </div>
                     <div className="text-center">
-                      <h2 className="text-2xl font-black text-slate-900 tracking-tight">{user.displayName || 'สหายบำบัดจิตผู้เยี่ยมชม (Guest)'}</h2>
-                      <p className="text-slate-400 text-sm font-medium">{user.email || 'guest@jaiguguru.org'}</p>
+                      <h2 className="text-2xl font-black text-slate-900 tracking-tight">{user?.displayName || 'สหายบำบัดจิตผู้เยี่ยมชม (Guest)'}</h2>
+                      <p className="text-slate-400 text-sm font-medium">{user?.email || 'guest@jaiguguru.org'}</p>
                     </div>
                   </div>
                 </div>
 
-                <ReminderSettings user={user} />
-
-                <GeminiApiKeySettings user={user} />
-
-                <AppEvaluation user={user} />
+                {isVisitor ? (
+                  <div className="bg-slate-50 border border-slate-200/60 rounded-[2.5rem] p-6 text-center space-y-3">
+                    <p className="text-xl">🔒</p>
+                    <h4 className="text-sm font-black text-slate-800">เครื่องมือวิเคราะห์ขั้นสูง (สำหรับสมาชิก)</h4>
+                    <p className="text-[11px] text-slate-500 font-sans max-w-[280px] mx-auto leading-relaxed">
+                      ฟีเจอร์ตั้งเวลาเตือนภัย บันทึกคีย์วิเคราะห์ส่วนตัว และเสนอแนะแอปพลิเคชัน ถูกจำกัดไว้เฉพาะสมาชิกที่เข้าสู่ระบบแบบเต็มรูปแบบเท่านั้นค่ะ สำหรับผู้ใช้ทั่วไป แนะนำให้เพลิดเพลินกับการใช้งาน เช็คอินอารมณ์ และบันทึกแผนปลอดภัย ได้อย่างเสรีเลยนะคะ 🤍
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <ReminderSettings user={user} />
+                    <GeminiApiKeySettings user={user} />
+                    <AppEvaluation user={user} />
+                  </>
+                )}
 
                 <button 
                   onClick={handleLogout}
-                  className="w-full py-4 flex items-center justify-center gap-3 text-rose-600 font-bold bg-rose-50 rounded-2xl hover:bg-rose-100 transition-all active:scale-95 border border-rose-100"
+                  className="w-full py-4 flex items-center justify-center gap-3 text-rose-600 font-bold bg-rose-50 rounded-2xl hover:bg-rose-100 transition-all active:scale-95 border border-rose-100 cursor-pointer"
                 >
                   <LogOut className="w-5 h-5" />
                   ออกจากระบบ
@@ -387,70 +465,145 @@ export default function App() {
       </main>
 
       {/* Bottom Nav: 7 Icons exactly as requested by user */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100/80 px-1 py-1 px-1 py-2 pb-6 z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100/80 px-1 py-2 pb-6 z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
         <div className="max-w-md mx-auto flex items-end justify-between px-0.5">
           <NavButton 
             active={activeTab === 'home'} 
-            onClick={() => setActiveTab('home')} 
+            onClick={() => handleTabClick('home')} 
             icon={<HomeIcon className="w-5 h-5" />} 
             label="หน้าหลัก" 
           />
           <NavButton 
             active={activeTab === 'mood'} 
-            onClick={() => setActiveTab('mood')} 
+            onClick={() => handleTabClick('mood')} 
             icon={<Heart className="w-5 h-5" />} 
             label="บันทึกอารมณ์" 
           />
           <NavButton 
             active={activeTab === 'chill'} 
-            onClick={() => setActiveTab('chill')} 
+            onClick={() => handleTabClick('chill')} 
             icon={<Wind className="w-5 h-5" />} 
             label="มุมสงบ" 
+            disabled={isTabRestricted('chill')}
           />
           <NavButton 
             active={activeTab === 'safety'} 
-            onClick={() => setActiveTab('safety')} 
+            onClick={() => handleTabClick('safety')} 
             icon={<ShieldAlert className="w-5 h-5" />} 
             label="แผนปลอดภัย" 
           />
           <NavButton 
             active={activeTab === 'aid'} 
-            onClick={() => setActiveTab('aid')} 
+            onClick={() => handleTabClick('aid')} 
             icon={<HeartPulse className="w-5 h-5" />} 
             label="ปฐมพยาบาลใจ" 
+            disabled={isTabRestricted('aid')}
           />
           <NavButton 
             active={activeTab === 'dojo'} 
-            onClick={() => setActiveTab('dojo')} 
+            onClick={() => handleTabClick('dojo')} 
             icon={<Brain className="w-5 h-5" />} 
             label="ห้องเรียนคิด" 
+            disabled={isTabRestricted('dojo')}
           />
           <NavButton 
             active={activeTab === 'screening'} 
-            onClick={() => setActiveTab('screening')} 
+            onClick={() => handleTabClick('screening')} 
             icon={<ClipboardCheck className="w-5 h-5" />} 
             label="คัดกรองวิจัย" 
+            disabled={isTabRestricted('screening')}
           />
           <NavButton 
             active={activeTab === 'dashboard'} 
-            onClick={() => setActiveTab('dashboard')} 
+            onClick={() => handleTabClick('dashboard')} 
             icon={<TrendingUp className="w-5 h-5" />} 
             label="บันทึกของฉัน" 
+            disabled={isTabRestricted('dashboard')}
           />
         </div>
       </nav>
+
+      {/* API Key Connection Auto Consent Overlay */}
+      <AnimatePresence>
+        {showApiConsent && pendingApiKey && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] border border-slate-100 max-w-sm w-full p-6 shadow-2xl relative overflow-hidden space-y-5"
+            >
+              <div className="absolute top-0 right-0 w-36 h-36 bg-indigo-50 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl -z-10" />
+              
+              <div className="flex items-start gap-3 relative z-10">
+                <span className="p-3 bg-indigo-50 rounded-2xl text-indigo-600 block shrink-0">
+                  <Brain className="w-6 h-6" />
+                </span>
+                <div className="space-y-0.5">
+                  <h3 className="text-base font-black text-slate-900 tracking-tight leading-snug">
+                    🔌 ยืนยันเรียกใช้งานร่วม <br/>Google Gemini API Key
+                  </h3>
+                  <span className="inline-block text-[9px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                    API Sync Consent
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 relative z-10 text-xs font-sans text-slate-600 leading-normal bg-slate-50 p-4 rounded-2xl border border-slate-150">
+                <p className="font-bold text-slate-700">ตรวจพบประวัติ API Key ของคุณเชื่อมต่ออยู่ในคลาวด์:</p>
+                <div className="font-mono text-[10px] bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-400 select-all truncate">
+                  AIzaSy...{pendingApiKey.substring(pendingApiKey.length - 6)}
+                </div>
+                <p className="text-[11px] leading-relaxed">
+                  ยินยอมให้เรียกใช้งานคีย์ส่วนตัวนี้แบบอัตโนมัติบนอุปกรณ์เครื่องนี้เพื่อเปิดขีดความสามารถ AI ประมวลผลความคิดและให้เกียรติจรรยาบรรณแพทย์สัญจรหรือไม่?
+                </p>
+                <div className="text-[10px] text-amber-700 font-bold bg-amber-50 rounded-xl p-2.5 border border-amber-100/60 leading-tight">
+                  🔒 ข้อมูล API Key จะถูกเข้ารหัสและรันในเซสชันอุปกรณ์เครื่องนี้เท่านั้น ไม่มีการเปิดเผยภายนอกใดๆ ทั้งสิ้น
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 relative z-10 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleApiConnectionConsent(false)}
+                  className="py-3 px-3 bg-slate-105 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl active:scale-95 transition-all text-center cursor-pointer"
+                >
+                  ปฏิเสธ (Decline)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleApiConnectionConsent(true)}
+                  className="py-3 px-3 bg-indigo-600 hover:bg-indigo-800 text-white font-black text-xs rounded-xl shadow-md active:scale-95 transition-all text-center cursor-pointer"
+                >
+                  ยินยอมเชื่อมต่อ
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function NavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+function NavButton({ active, onClick, icon, label, disabled }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, disabled?: boolean }) {
   return (
     <button 
       onClick={onClick}
-      className={`flex flex-col items-center gap-0.5 transition-all text-center flex-1 min-w-0 ${active ? 'text-indigo-600 scale-105 font-black' : 'text-slate-400 hover:text-slate-600'}`}
+      className={`flex flex-col items-center gap-0.5 transition-all text-center flex-1 min-w-0 ${active ? 'text-indigo-600 scale-105 font-black' : disabled ? 'text-slate-300 opacity-60' : 'text-slate-400 hover:text-slate-600 cursor-pointer'}`}
     >
-      <div className={`p-1 rounded-xl transition-all ${active ? 'bg-indigo-50/70' : 'bg-transparent'}`}>
+      <div className={`p-1 rounded-xl transition-all relative ${active ? 'bg-indigo-50/70' : 'bg-transparent'}`}>
         {icon}
+        {disabled && (
+          <span className="absolute -top-1 -right-1.5 bg-slate-400 text-[6px] text-white rounded-full px-0.5 py-px border border-white font-sans scale-75">
+            🔒
+          </span>
+        )}
       </div>
       <span className="text-[8px] sm:text-[9px] font-semibold leading-none whitespace-nowrap truncate w-full max-w-[54px] block mt-0.5">
         {label}

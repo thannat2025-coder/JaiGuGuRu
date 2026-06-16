@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { Key, CheckCircle, AlertTriangle, Eye, EyeOff, Sparkles, RefreshCw, HelpCircle } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { toast } from 'react-hot-toast';
+import { db } from '@/src/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface GeminiApiKeySettingsProps {
   user: {
@@ -23,21 +25,44 @@ export default function GeminiApiKeySettings({ user }: GeminiApiKeySettingsProps
     setApiKey(savedKey);
   }, [user.uid]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmedKey = apiKey.trim();
     if (trimmedKey && !trimmedKey.startsWith('AIzaSy')) {
       toast.error('ดูเหมือนรูปแบบ API Key จะไม่ถูกต้อง (ปกติจะขึ้นต้นด้วย AIzaSy)');
       return;
     }
 
-    if (trimmedKey === '') {
-      localStorage.removeItem(`custom_gemini_api_key_${user.uid}`);
-      toast.success('ล้างการตั้งค่าคีย์ส่วนตัวสำเร็จ');
-    } else {
-      localStorage.setItem(`custom_gemini_api_key_${user.uid}`, trimmedKey);
-      toast.success('บันทึก API Key สำเร็จ!');
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+    try {
+      if (trimmedKey === '') {
+        localStorage.removeItem(`custom_gemini_api_key_${user.uid}`);
+        localStorage.removeItem(`custom_gemini_api_key_consented_${user.uid}`);
+        
+        if (user.uid && !user.uid.startsWith('local_')) {
+          await setDoc(doc(db, 'users', user.uid), {
+            geminiApiKey: null,
+            geminiApiKeySavedAt: null
+          }, { merge: true });
+        }
+        
+        toast.success('ล้างการตั้งค่าคีย์ส่วนตัวสำเร็จ');
+      } else {
+        localStorage.setItem(`custom_gemini_api_key_${user.uid}`, trimmedKey);
+        localStorage.setItem(`custom_gemini_api_key_consented_${user.uid}`, 'true');
+        
+        if (user.uid && !user.uid.startsWith('local_')) {
+          await setDoc(doc(db, 'users', user.uid), {
+            geminiApiKey: trimmedKey,
+            geminiApiKeySavedAt: serverTimestamp()
+          }, { merge: true });
+        }
+        
+        toast.success('บันทึก API Key สำเร็จ!');
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (err: any) {
+      console.error("Error storing API Key in Firestore:", err);
+      toast.error('บันทึกคีย์ลงฐานระบบล้มเหลว แต่บันทึกในเครื่องถิ่นแล้วค่ะ');
     }
   };
 
@@ -66,6 +91,17 @@ export default function GeminiApiKeySettings({ user }: GeminiApiKeySettingsProps
         toast.success(`เชื่อมต่อสำเร็จเยาวชน! AI ตอบกลับ: "${response.text.trim()}"`, { id: 'test-api', duration: 4000 });
         // Auto save if test succeeds
         localStorage.setItem(`custom_gemini_api_key_${user.uid}`, trimmedKey);
+        localStorage.setItem(`custom_gemini_api_key_consented_${user.uid}`, 'true');
+        if (user.uid && !user.uid.startsWith('local_')) {
+          try {
+            await setDoc(doc(db, 'users', user.uid), {
+              geminiApiKey: trimmedKey,
+              geminiApiKeySavedAt: serverTimestamp()
+            }, { merge: true });
+          } catch (e) {
+            console.error("Auto-save API key to Firestore failed", e);
+          }
+        }
       } else {
         throw new Error('ไม่ได้รับข้อความตอบสนอง');
       }

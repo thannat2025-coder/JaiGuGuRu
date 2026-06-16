@@ -24,7 +24,7 @@ export default function PrivacyConsent({ onAccept }: PrivacyConsentProps) {
           </div>
           <h2 className="text-2xl font-bold mb-2">ความปลอดภัยและความเป็นส่วนตัว</h2>
           <p className="text-indigo-100 text-sm leading-relaxed opacity-90">
-            JaiGuGuRu (ใจกู...กูรู้) ให้ความสำคัญสูงสุดกับความลับและข้อมูลส่วนตัวของคุณ เพื่อให้คุณเปลาะบางและเปิดใจได้อย่างสบายใจที่สุด
+            JaiGu (GuRu.D) ใจกุ (กูรู ดี) ให้ความสำคัญสูงสุดกับความลับและข้อมูลส่วนตัวของคุณ เพื่อให้คุณเปลาะบางและเปิดใจได้อย่างสบายใจที่สุด
           </p>
         </div>
 

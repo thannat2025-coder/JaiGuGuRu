@@ -475,7 +475,7 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
             <div className="space-y-4 text-xs font-sans text-slate-650 leading-relaxed max-h-96 overflow-y-auto pr-2 bg-slate-50/40 p-5 rounded-2xl border border-slate-100">
               <p className="font-extrabold text-slate-900 text-sm">การศึกษาวิจัยเพื่อประเมินประสิทธิภาพทางคลินิก (Clinical Efficacy Evaluation)</p>
               <p>
-                แอปพลิเคชัน <strong>JaiGuGuRu (ใจกู...กูรู้)</strong> นอกเหนือจากการทำหน้าที่เป็นเครื่องมือพกพาส่วนบุคคลบำบัดฟื้นฟูด้วย Cognitive Behavioral Therapy (CBT) แล้ว แอปฯ นี้ยังร่วมสนับสนุนโครงการวิจัยประเมินผลสัมฤทธิ์สุขภาพจิตในกลุ่มนิสิต นักเรียน นักศึกษา และทั่วไป
+                แอปพลิเคชัน <strong>JaiGu (GuRu.D) ใจกุ (กูรู ดี)</strong> นอกเหนือจากการทำหน้าที่เป็นเครื่องมือพกพาส่วนบุคคลบำบัดฟื้นฟูด้วย Cognitive Behavioral Therapy (CBT) แล้ว แอปฯ นี้ยังร่วมสนับสนุนโครงการวิจัยประเมินผลสัมฤทธิ์สุขภาพจิตในกลุ่มนิสิต นักเรียน นักศึกษา และทั่วไป
               </p>
               <p className="font-extrabold text-rose-700">🔒 มาตรฐานการคุ้มครองความเป็นส่วนตัวขั้นสูงสุด (Strict De-identification Standard):</p>
               <ul className="list-disc list-inside space-y-1.5 pl-1.5">

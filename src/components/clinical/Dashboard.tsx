@@ -326,7 +326,7 @@ export default function Dashboard({ user }: DashboardProps) {
     
     // Header section
     csvContent += "========================================================\r\n";
-    csvContent += `รายงานประวัติอารมณ์และเกราะสติความปลอดภัย (De-identified Clinical Report) - JaiGuGuRu\r\n`;
+    csvContent += `รายงานประวัติอารมณ์และเกราะสติความปลอดภัย (De-identified Clinical Report) - JaiGu (GuRu.D)\r\n`;
     csvContent += `รหัสและชื่อผู้ใช้บำบัด (De-identified PATIENT): ${pCodeName}\r\n`;
     csvContent += `อีเมลติดต่อ (Protected EMAIL): ${pCodeEmail}\r\n`;
     csvContent += `พิมพ์สรุปเมื่อวันที่: ${format(new Date(), 'dd MMMM yyyy HH:mm', { locale: th })}\r\n`;
@@ -884,7 +884,7 @@ export default function Dashboard({ user }: DashboardProps) {
               
               const pCode = `Participant-JG-${user.uid?.substring(0, 5).toUpperCase()}`;
               let csv = "========================================================\r\n";
-              csv += `ฐานข้อมูลวิจัยคัดกรองสุขภาพจิตสัมฤทธิ์ผล (Clinical Trial De-identified Raw Data) - JaiGuGuRu\r\n`;
+              csv += `ฐานข้อมูลวิจัยคัดกรองสุขภาพจิตสัมฤทธิ์ผล (Clinical Trial De-identified Raw Data) - JaiGu (GuRu.D)\r\n`;
               csv += `ส่งออกข้อมูลเมื่อ: ${format(new Date(), 'yyyy-MM-dd HH:mm น.')}\r\n`;
               csv += "========================================================\r\n\r\n";
               
@@ -1175,7 +1175,7 @@ export default function Dashboard({ user }: DashboardProps) {
               <div className="flex justify-between items-start border-b border-indigo-50 pb-5">
                 <div className="space-y-1">
                   <div className="text-[10px] uppercase tracking-widest font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full w-fit">
-                    JaiGuGuRu Clinical Dashboard Report
+                    JaiGu (GuRu.D) Clinical Dashboard Report
                   </div>
                   <h3 className="text-xl font-black text-slate-950">รายงานสำหรับแพทย์และนักจิตบำบัด</h3>
                   <p className="text-slate-400 text-[10px] font-semibold">พิมพ์เพื่อนำติดตัวพูดคุยในนัดหมายบำบัดครั้งถัดไป</p>
@@ -1272,13 +1272,13 @@ export default function Dashboard({ user }: DashboardProps) {
       >
         <div className="border-b-4 border-slate-900 pb-4 flex justify-between items-start">
           <div className="space-y-1">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">JaiGuGuRu (ใจกู...กูรู้)</h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">JaiGu (GuRu.D) ใจกุ (กูรู ดี)</h1>
             <p className="text-xs uppercase font-extrabold tracking-widest text-indigo-850">Mental Health Diagnostic Self-Monitoring Report</p>
             <p className="text-slate-400 text-[10px]">รายงานประวัติอารมณ์ เกราะปัญญา CBT และวินัยการประคองสติ คุ้มครองความลับอัตลักษณ์ผู้ป่วยอย่างทางการ (De-identified Clinical Report)</p>
           </div>
           <div className="text-right text-[10px] text-slate-500 space-y-1">
             <p className="font-extrabold text-slate-800">วันที่พิมพ์รายงาน: {format(new Date(), 'dd MMMM yyyy HH:mm น.', { locale: th })}</p>
-            <p>ประมวลผลผ่าน JaiGuGuRu Secure Medical Portal Partner</p>
+            <p>ประมวลผลผ่าน JaiGu (GuRu.D) Secure Medical Portal Partner</p>
           </div>
         </div>
 
@@ -1443,7 +1443,7 @@ export default function Dashboard({ user }: DashboardProps) {
         </div>
 
         <div className="text-center text-[10px] text-slate-400 pt-6">
-          <p>สงวนลิขสิทธิ์ความปลอดภัยทางการรักษาความลับของคุณตามสิทธิพื้นฐานผู้ป่วย © JaiGuGuRu 🌟</p>
+          <p>สงวนลิขสิทธิ์ความปลอดภัยทางการรักษาความลับของคุณตามสิทธิพื้นฐานผู้ป่วย © JaiGu (GuRu.D) 🌟</p>
         </div>
       </div>
     </div>
