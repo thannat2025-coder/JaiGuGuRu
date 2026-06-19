@@ -9,17 +9,15 @@ const getAIClient = (): GoogleGenAI => {
     key = window.localStorage.getItem(`custom_gemini_api_key_${uid}`) || "";
   }
 
+  // 1. Prioritize user's own custom key
   if (key && key.trim().startsWith("AIzaSy")) {
     return new GoogleGenAI({ apiKey: key.trim() });
   }
 
-  // Developer (Dr. Thanwaruj) can use the standard build-time key
-  if (email === "thannat2025@gmail.com") {
-    // Falls back to process.env.GEMINI_API_KEY
-    const devKey = process.env.GEMINI_API_KEY as string;
-    if (devKey && devKey.trim().length > 0) {
-      return new GoogleGenAI({ apiKey: devKey });
-    }
+  // 2. Fall back to process.env.GEMINI_API_KEY if present and valid
+  const devKey = process.env.GEMINI_API_KEY as string;
+  if (devKey && devKey.trim().length > 0 && devKey.trim() !== "undefined") {
+    return new GoogleGenAI({ apiKey: devKey.trim() });
   }
 
   throw new Error("REQUIRED_USER_KEY");

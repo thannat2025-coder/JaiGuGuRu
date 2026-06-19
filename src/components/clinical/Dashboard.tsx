@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { db } from '@/src/lib/firebase';
+import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { collection, query, orderBy, getDocs, limit, doc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -143,77 +143,109 @@ export default function Dashboard({ user }: DashboardProps) {
       }
 
       // Fetch Mood Logs (Last 100 entries)
-      const moodQ = query(
-        collection(db, 'users', user.uid, 'moodLogs'),
-        orderBy('createdAt', 'desc'),
-        limit(100)
-      );
-      const moodSnap = await getDocs(moodQ);
-      const moods = moodSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().createdAt?.toDate()
-      })).reverse();
-      setMoodLogs(moods);
+      let moods: any[] = [];
+      const moodPath = `users/${user.uid}/moodLogs`;
+      try {
+        const moodQ = query(
+          collection(db, 'users', user.uid, 'moodLogs'),
+          orderBy('createdAt', 'desc'),
+          limit(100)
+        );
+        const moodSnap = await getDocs(moodQ);
+        moods = moodSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().createdAt?.toDate()
+        })).reverse();
+        setMoodLogs(moods);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, moodPath);
+      }
 
       // Fetch Thought Records
-      const thoughtQ = query(
-        collection(db, 'users', user.uid, 'thoughtRecords'),
-        orderBy('createdAt', 'desc'),
-        limit(50)
-      );
-      const thoughtSnap = await getDocs(thoughtQ);
-      const thoughts = thoughtSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().createdAt?.toDate()
-      }));
-      setThoughtRecords(thoughts);
+      let thoughts: any[] = [];
+      const thoughtPath = `users/${user.uid}/thoughtRecords`;
+      try {
+        const thoughtQ = query(
+          collection(db, 'users', user.uid, 'thoughtRecords'),
+          orderBy('createdAt', 'desc'),
+          limit(50)
+        );
+        const thoughtSnap = await getDocs(thoughtQ);
+        thoughts = thoughtSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().createdAt?.toDate()
+        }));
+        setThoughtRecords(thoughts);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, thoughtPath);
+      }
 
       // Fetch latest safety plan from "safetyPlans/current"
       const safetyPlanRef = doc(db, 'users', user.uid, 'safetyPlans', 'current');
-      const safetyPlanSnap = await getDoc(safetyPlanRef);
-      if (safetyPlanSnap.exists()) {
-        setSafetyPlan(safetyPlanSnap.data());
-      } else {
-        // Fallback or legacy support
-        const legacyQ = query(collection(db, 'users', user.uid, 'safetyPlans'), limit(1));
-        const legacySnap = await getDocs(legacyQ);
-        if (!legacySnap.empty) {
-          setSafetyPlan(legacySnap.docs[0].data());
+      const safetyPlanPath = `users/${user.uid}/safetyPlans/current`;
+      try {
+        const safetyPlanSnap = await getDoc(safetyPlanRef);
+        if (safetyPlanSnap.exists()) {
+          setSafetyPlan(safetyPlanSnap.data());
+        } else {
+          // Fallback or legacy support
+          const legacyQ = query(collection(db, 'users', user.uid, 'safetyPlans'), limit(1));
+          const legacySnap = await getDocs(legacyQ);
+          if (!legacySnap.empty) {
+            setSafetyPlan(legacySnap.docs[0].data());
+          }
         }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, safetyPlanPath);
       }
 
       // Fetch safety plan logs (daily screen answers / update events)
-      const safetyLogsQ = query(
-        collection(db, 'users', user.uid, 'safetyPlanLogs'),
-        orderBy('createdAt', 'desc'),
-        limit(100)
-      );
-      const safetyLogsSnap = await getDocs(safetyLogsQ);
-      const decodedLogs = safetyLogsSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().createdAt?.toDate()
-      }));
-      setSafetyPlanLogs(decodedLogs);
+      const safetyLogsPath = `users/${user.uid}/safetyPlanLogs`;
+      try {
+        const safetyLogsQ = query(
+          collection(db, 'users', user.uid, 'safetyPlanLogs'),
+          orderBy('createdAt', 'desc'),
+          limit(100)
+        );
+        const safetyLogsSnap = await getDocs(safetyLogsQ);
+        const decodedLogs = safetyLogsSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().createdAt?.toDate()
+        }));
+        setSafetyPlanLogs(decodedLogs);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, safetyLogsPath);
+      }
 
       // Fetch research demographics doc
       const demoRef = doc(db, 'users', user.uid, 'researchDemographics', 'current');
-      const demoSnap = await getDoc(demoRef);
-      if (demoSnap.exists()) {
-        setDemographics(demoSnap.data());
+      const demoPath = `users/${user.uid}/researchDemographics/current`;
+      try {
+        const demoSnap = await getDoc(demoRef);
+        if (demoSnap.exists()) {
+          setDemographics(demoSnap.data());
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, demoPath);
       }
 
       // Fetch clinical screenings list over the 8 checkpoints
-      const screenQ = query(collection(db, 'users', user.uid, 'screeningHistory'), orderBy('checkpointIndex', 'asc'));
-      const screenSnap = await getDocs(screenQ);
-      const screenings = screenSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().createdAt?.toDate() || new Date()
-      }));
-      setClinicalScreeningsList(screenings);
+      const screeningPath = `users/${user.uid}/screeningHistory`;
+      try {
+        const screenQ = query(collection(db, 'users', user.uid, 'screeningHistory'), orderBy('checkpointIndex', 'asc'));
+        const screenSnap = await getDocs(screenQ);
+        const screenings = screenSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().createdAt?.toDate() || new Date()
+        }));
+        setClinicalScreeningsList(screenings);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, screeningPath);
+      }
 
       // Calculate Stats
       const avg = moods.length > 0 

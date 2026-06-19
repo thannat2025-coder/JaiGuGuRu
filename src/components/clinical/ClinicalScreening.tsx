@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '@/src/lib/firebase';
+import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { collection, doc, getDoc, getDocs, setDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, Heart, User, CheckCircle2, ChevronRight, HelpCircle, Lock, Clipboard, ArrowRight, Activity, Award, Sparkles, Send, AlertTriangle, Play, RefreshCw, FileSpreadsheet } from 'lucide-react';
@@ -150,39 +150,50 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
 
       // Read from Firestore for authenticated user
       const demoRef = doc(db, 'users', user.uid, 'researchDemographics', 'current');
-      const demoSnap = await getDoc(demoRef);
-      if (demoSnap.exists()) {
-        const parsed = demoSnap.data();
-        setDemographics(parsed);
-        setGender(parsed.gender || '');
-        setAge(parsed.age?.toString() || '');
-        setOccupation(parsed.occupation || '');
-        setStudentYear(parsed.studentYear || '');
-        setProvince(parsed.province || '');
-        setMedicalIllness(parsed.medicalIllness || '');
-        setPsychiatricMedication(parsed.psychiatricMedication && parsed.psychiatricMedication !== 'ไม่มี' ? 'yes' : 'no');
-        setPsychiatricMedicationDetails(parsed.psychiatricMedication || '');
-        setConsentCheck(parsed.consented || false);
+      const demoPath = `users/${user.uid}/researchDemographics/current`;
+      let demoSnap;
+      try {
+        demoSnap = await getDoc(demoRef);
+        if (demoSnap.exists()) {
+          const parsed = demoSnap.data();
+          setDemographics(parsed);
+          setGender(parsed.gender || '');
+          setAge(parsed.age?.toString() || '');
+          setOccupation(parsed.occupation || '');
+          setStudentYear(parsed.studentYear || '');
+          setProvince(parsed.province || '');
+          setMedicalIllness(parsed.medicalIllness || '');
+          setPsychiatricMedication(parsed.psychiatricMedication && parsed.psychiatricMedication !== 'ไม่มี' ? 'yes' : 'no');
+          setPsychiatricMedicationDetails(parsed.psychiatricMedication || '');
+          setConsentCheck(parsed.consented || false);
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.GET, demoPath);
       }
 
-      const screenQ = query(collection(db, 'users', user.uid, 'screeningHistory'), orderBy('checkpointIndex', 'asc'));
-      const screenSnap = await getDocs(screenQ);
-      const screenings = screenSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().createdAt?.toDate() || new Date()
-      }));
-      setScreeningLogs(screenings);
+      const screeningPath = `users/${user.uid}/screeningHistory`;
+      try {
+        const screenQ = query(collection(db, 'users', user.uid, 'screeningHistory'), orderBy('checkpointIndex', 'asc'));
+        const screenSnap = await getDocs(screenQ);
+        const screenings = screenSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().createdAt?.toDate() || new Date()
+        }));
+        setScreeningLogs(screenings);
 
-      const totalCompleted = screenings.length;
-      setActiveCheckpointIndex(Math.min(totalCompleted, 7));
+        const totalCompleted = screenings.length;
+        setActiveCheckpointIndex(Math.min(totalCompleted, 7));
 
-      if (!demoSnap.exists()) {
-        setCurrentStage('welcome');
-      } else if (totalCompleted === 0) {
-        setCurrentStage('dass21');
-      } else {
-        setCurrentStage('history');
+        if (!demoSnap || !demoSnap.exists()) {
+          setCurrentStage('welcome');
+        } else if (totalCompleted === 0) {
+          setCurrentStage('dass21');
+        } else {
+          setCurrentStage('history');
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, screeningPath);
       }
 
     } catch (error) {
