@@ -141,12 +141,12 @@ export const getPsychoeducation = async (query: string): Promise<string> => {
         systemInstruction: "You are a supportive, Thai-speaking mental health assistant for teenagers. Use clinical knowledge from CBT and DBT. Be empathetic, non-judgmental, and safe. If the user mentions self-harm, prioritize safety and suggest the Safety Plan. Keep answers concise and age-appropriate (Thai teenager context)."
       }
     });
-    return response.text || "ขออภัยด้วยค่ะ ไม่ได้รับคำตอบในเวลานี้";
+    return response.text || "ขออภัยด้วยครับ ไม่ได้รับคำตอบในเวลานี้";
   } catch (e: any) {
     if (e?.message === "REQUIRED_USER_KEY") {
-      return "🔒 ขออภัยด้วยค่ะ เนื่องจากขณะนี้คุณล็อกอินเข้าร่วมแอปในฐานะผู้ใช้ภายนอก เพื่อประโยขน์และขอบเขตข้อตกลงการป้องกันการดึงโควตาจำกัดของเซิร์ฟเวอร์ กรุณาเพิ่ม 'Google Gemini API Key' ส่วนตัวของคุณในหน้าข้อมูลส่วนตัว (แท็บ Profile ด้านล่างขวา) ก่อนนะคะ ระบบจะเริ่มแนะนำฝึกคิดได้อย่างฉลาดลึกซึ้งทันทีเลยค่ะ! 🤍 (สามารถรับ API Key ได้ฟรี ไม่มีค่าใช้จ่ายที่ Google AI Studio)";
+      return "🔒 ขออภัยด้วยครับ เนื่องจากขณะนี้คุณล็อกอินเข้าร่วมแอปในฐานะผู้ใช้ภายนอก เพื่อประโยขน์และขอบเขตข้อตกลงการป้องกันการดึงโควตาจำกัดของเซิร์ฟเวอร์ กรุณาเพิ่ม 'Google Gemini API Key' ส่วนตัวของคุณในหน้าข้อมูลส่วนตัว (แท็บ Profile ด้านล่างขวา) ก่อนนะครับ ระบบจะเริ่มแนะนำฝึกคิดได้อย่างฉลาดลึกซึ้งทันทีเลยครับ! 🤍 (สามารถรับ API Key ได้ฟรี ไม่มีค่าใช้จ่ายที่ Google AI Studio)";
     }
     console.error("Failed to run psychoeducation assistant", e);
-    return "ขออภัยด้วยค่ะ ระบบประมวลผลขัดข้องชั่วคราว ลองเริ่มใหม่อีกครั้งนะคะ";
+    return "ขออภัยด้วยครับ ระบบประมวลผลขัดข้องชั่วคราว ลองเริ่มใหม่อีกครั้งนะครับ";
   }
 };

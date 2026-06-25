@@ -205,7 +205,7 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
 
   const handleConsentAccept = () => {
     if (!consentCheck) {
-      toast.error('กรุณากดกล่องยินยอมเข้าร่วมโครงการวิจัยก่อนดำเนินการค่ะ');
+      toast.error('กรุณากดกล่องยินยอมเข้าร่วมโครงการวิจัยก่อนดำเนินการครับ');
       return;
     }
     setCurrentStage('demographics');
@@ -214,18 +214,18 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
   const submitDemographics = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!gender || !age || !occupation || !province) {
-      toast.error('กรุณากรอกข้อมูลดั้งเดิมที่มีความสอดคล้องกันให้ครบถ้วนด้วยนะคะ');
+      toast.error('กรุณากรอกข้อมูลดั้งเดิมที่มีความสอดคล้องกันให้ครบถ้วนด้วยนะครับ');
       return;
     }
 
     const ageNum = parseInt(age);
     if (isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
-      toast.error('อายุไม่อยู่ในระดับข้อมูลที่เป็นจริง กรุณาเปลี่ยนด้วยค่ะ');
+      toast.error('อายุไม่อยู่ในระดับข้อมูลที่เป็นจริง กรุณาเปลี่ยนด้วยครับ');
       return;
     }
 
     if (occupation === 'นักเรียน/นิสิตนักศึกษา' && !studentYear) {
-      toast.error('กรุณาระบุชั้นเรียนหรือรายละเอียดนิสิตศึกษาด้วยค่ะ');
+      toast.error('กรุณาระบุชั้นเรียนหรือรายละเอียดนิสิตศึกษาด้วยครับ');
       return;
     }
 
@@ -248,17 +248,17 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
       if (user.uid.startsWith('local_')) {
         localStorage.setItem(`clinical_demo_${user.uid}`, JSON.stringify(demoPayload));
         setDemographics(demoPayload);
-        toast.success('บันทึกข้อมูลทั่วไปเรียบร้อยแล้วค่ะ! เริ่มทำการประเมินรอยยิ้มอุ่นใจ Baseline กันนะคะ');
+        toast.success('บันทึกข้อมูลทั่วไปเรียบร้อยแล้วครับ! เริ่มทำการประเมินรอยยิ้มอุ่นใจ Baseline กันนะครับ');
         setCurrentStage('dass21');
       } else {
         await setDoc(doc(db, 'users', user.uid, 'researchDemographics', 'current'), demoPayload);
         setDemographics(demoPayload);
-        toast.success('บันทึกข้อมูลประวัติสมดุลใจเรียบร้อยแล้วค่ะ');
+        toast.success('บันทึกข้อมูลประวัติสมดุลใจเรียบร้อยแล้วครับ');
         setCurrentStage('dass21');
       }
     } catch (error) {
       console.error("Demographic submit failed:", error);
-      toast.error('ระบบติดขัดเล็กน้อย กรุณาลองใหม่อีกครั้งค่ะ');
+      toast.error('ระบบติดขัดเล็กน้อย กรุณาลองใหม่อีกครั้งครับ');
     } finally {
       setLoading(false);
     }
@@ -356,14 +356,14 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
         setActiveCheckpointIndex(Math.min(screenings.length, 7));
       }
 
-      toast.success(`ส่งข้อมูลแบบประเมินสุขภาพจิต ${checkpoint.label} สำเร็จเสร็จสมบูรณ์เรียบร้อยแล้วค่ะค่ะ 💖`);
+      toast.success(`ส่งข้อมูลแบบประเมินสุขภาพจิต ${checkpoint.label} สำเร็จเสร็จสมบูรณ์เรียบร้อยแล้วครับ 💖`);
       setCurrentStage('completed');
       if (activeCheckpointIndex === 0 && onCompleteInitial) {
         onCompleteInitial();
       }
     } catch (e) {
       console.error("Error saving clinical screening data:", e);
-      toast.error('ไม่พร้อมสำหรับการบันทึกข้อสอบ กรุณาแจ้งผู้พัฒนาค่ะ');
+      toast.error('ไม่พร้อมสำหรับการบันทึกข้อสอบ กรุณาแจ้งผู้พัฒนาครับ');
     } finally {
       setLoading(false);
     }
@@ -410,7 +410,7 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
     setNsiMethods([]);
     setNsiFrequency('');
     setNsiReasons([]);
-    toast.success(`เปลี่ยนโหมดทำประเมินข้ามช่วงสำหรับ ${CHECKPOINTS[idx].label} แล้วค่ะ!`);
+    toast.success(`เปลี่ยนโหมดทำประเมินข้ามช่วงสำหรับ ${CHECKPOINTS[idx].label} แล้วครับ!`);
     setCurrentStage('dass21');
   };
 
@@ -495,7 +495,7 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
                 <li><strong>เสรีภาพทางใจ:</strong> คุณมีสิทธิตามกฎหมาย PDPA ในการเพิกถอนสิทธิ ร้องขอสตรีคลบข้อมูลการประเมินได้ตลอดเวลาผ่านแท็บประวัติของระบบ ไม่มีผลเสียใดๆ ต่อสิทธิการรักษาพยาบาลหรือการใช้งานฟังก์ชันอื่นๆ</li>
               </ul>
               <p className="font-medium">
-                หากคุณยินดีร่วมเป็นส่วนหนึ่งของการซ่อมเยียวยาใจเพื่อนมนุษย์และช่วยเหลือในการพัฒนาโปรแกรมจิตวิทยาบำบัด กรุณากรอกกล่องยินยอมด้านล่างเพื่อเข้าลงทะเบียนกรอกประวัติตนเองแบบปิดบังชื่อและทำแบบคัดกรองเบื้องต้นค่ะ
+                หากคุณยินดีร่วมเป็นส่วนหนึ่งของการซ่อมเยียวยาใจเพื่อนมนุษย์และช่วยเหลือในการพัฒนาโปรแกรมจิตวิทยาบำบัด กรุณากรอกกล่องยินยอมด้านล่างเพื่อเข้าลงทะเบียนกรอกประวัติตนเองแบบปิดบังชื่อและทำแบบคัดกรองเบื้องต้นครับ
               </p>
             </div>
 
@@ -640,7 +640,7 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
                 <textarea
                   value={medicalIllness}
                   onChange={(e) => setMedicalIllness(e.target.value)}
-                  placeholder="ระบุ เช่น โรคซึมเศร้า (MDD), สมาธิสั้น (ADHD), ความดัน โรคภูมิแพ้ หรือ พิมพ์ว่า 'ไม่มี' หากสุขภาพร่างกายปกติดีค่ะ"
+                  placeholder="ระบุ เช่น โรคซึมเศร้า (MDD), สมาธิสั้น (ADHD), ความดัน โรคภูมิแพ้ หรือ พิมพ์ว่า 'ไม่มี' หากสุขภาพร่างกายปกติดีครับ"
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium text-slate-800 h-20 focus:bg-white focus:outline-none' focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -786,7 +786,7 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
                 onClick={() => {
                   const answeredCount = Object.keys(dassAnswers).length;
                   if (answeredCount < 21) {
-                    toast.error(`กรุณาบันทึกครบถ้วนทุกข้อการบำบัดด้วยค่พวิเคราะห์ค่ะ (ตอบแล้ว ${answeredCount}/21 ข้อ)`);
+                    toast.error(`กรุณาบันทึกครบถ้วนทุกข้อการบำบัดด้วยครับ (ตอบแล้ว ${answeredCount}/21 ข้อ)`);
                     return;
                   }
                   setCurrentStage('phqa');
@@ -862,7 +862,7 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
                 onClick={() => {
                   const answeredCount = Object.keys(phqAnswers).length;
                   if (answeredCount < 9) {
-                    toast.error(`กรุณาบันทึกครบถ้วนทุกข้อการบำบัดด้วยค่ะ (ตอบแล้ว ${answeredCount}/9 ข้อ)`);
+                    toast.error(`กรุณาบันทึกครบถ้วนทุกข้อการบำบัดด้วยครับ (ตอบแล้ว ${answeredCount}/9 ข้อ)`);
                     return;
                   }
                   setCurrentStage('bnssiat');
@@ -1068,15 +1068,15 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
                 type="button"
                 onClick={() => {
                   if (hasNsi === null) {
-                    toast.error('กรุณาเลือกประวัติข้อที่ 1 ก่อนดำเนินการจัดส่งข้อสอบค่ะ');
+                    toast.error('กรุณาเลือกประวัติข้อที่ 1 ก่อนดำเนินการจัดส่งข้อสอบครับ');
                     return;
                   }
                   if (hasNsi === true && nsiMethods.length === 0) {
-                    toast.error('กรุณาเลือกวิธีการทำร้ายตัวเองในข้อที่ 2 ด้วยค่ะ');
+                    toast.error('กรุณาเลือกวิธีการทำร้ายตัวเองในข้อที่ 2 ด้วยครับ');
                     return;
                   }
                   if (hasNsi === true && !nsiFrequency) {
-                    toast.error('กรุณาระบุความถี่ของพฤติกรรมในข้อที่ 3 ด้วยค่ะ');
+                    toast.error('กรุณาระบุความถี่ของพฤติกรรมในข้อที่ 3 ด้วยครับ');
                     return;
                   }
                   submitScreenings();
@@ -1104,9 +1104,9 @@ export default function ClinicalScreening({ user, onBackToHome, onCompleteInitia
 
             <div className="space-y-2">
               <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">บันทึกสัมฤทธิ์รอยยิ้มเรียบร้อย</span>
-              <h3 className="text-xl font-black text-slate-850">แบบคัดกรองคลิกนิกสำเร็จลุล่วงด้วยดีค่ะ 💖</h3>
+              <h3 className="text-xl font-black text-slate-850">แบบคัดกรองคลิกนิกสำเร็จลุล่วงด้วยดีครับ 💖</h3>
               <p className="text-xs text-slate-500 font-sans font-medium leading-relaxed max-w-sm mx-auto">
-                ขอบคุณสหายสำหรับการตอบข้อสอบบำบัดรักษาเพื่อประโยชน์ในโครงสร้างวิจัยสุขภาพจิตเป็นอย่างยิ่ง... ข้อมูลคะแนนทั้งหมดถูกเข้ารหัสคุ้มครอง (De-identified) สถิติสะสมจะถูกบันทึกที่หน้าวิจัยของ Dashboard เรียบร้อยแล้วค่ะค่ะ!
+                ขอบคุณสหายสำหรับการตอบข้อสอบบำบัดรักษาเพื่อประโยชน์ในโครงสร้างวิจัยสุขภาพจิตเป็นอย่างยิ่ง... ข้อมูลคะแนนทั้งหมดถูกเข้ารหัสคุ้มครอง (De-identified) สถิติสะสมจะถูกบันทึกที่หน้าวิจัยของ Dashboard เรียบร้อยแล้วครับ!
               </p>
             </div>
 

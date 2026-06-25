@@ -129,7 +129,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
     try {
       localStorage.setItem(`ba_goal_${user.uid}`, newGoal);
       setUserGoal(newGoal);
-      toast.success('บันทึกเป้าหมายฟื้นฟูพลังรอยยิ้มสำเร็จแล้วค่ะ! 🏆');
+      toast.success('บันทึกเป้าหมายฟื้นฟูพลังรอยยิ้มสำเร็จแล้วครับ! 🏆');
     } catch (err) {
       toast.error('ไม่สามารถบันทึกเป้าหมายได้');
     } finally {
@@ -162,7 +162,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
         localData.unshift(newAct);
         localStorage.setItem(`ba_activities_${user.uid}`, JSON.stringify(localData));
         setActivities(localData);
-        toast.success('บันทึกเพิ่มกิจกรรมในแผนศิระบำบัดแล้วค่ะ! 🏃‍♂️');
+        toast.success('บันทึกเพิ่มกิจกรรมในแผนศิระบำบัดแล้วครับ! 🏃‍♂️');
       } else {
         const docRef = await addDoc(collection(db, 'users', user.uid, 'behaviorActivation'), {
           ...payload,
@@ -170,7 +170,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
         });
         const newAct = { ...payload, id: docRef.id, createdAt: new Date().toISOString() };
         setActivities([newAct, ...activities]);
-        toast.success('บันทึกพิทักษ์ลงระบบฐานข้อมูลสำเร็จแล้วค่ะ!');
+        toast.success('บันทึกพิทักษ์ลงระบบฐานข้อมูลสำเร็จแล้วครับ!');
       }
 
       // Reset
@@ -224,7 +224,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
         setActivities(activities.map(x => x.id === evaluatingActivityId ? { ...x, ...updatedFields } : x));
       }
 
-      toast.success('สะสมพลังแห่งการลงมือทำเรียบร้อย! ขยับความสุขขึ้นอีกก้าวค่ะ ✨');
+      toast.success('สะสมพลังแห่งการลงมือทำเรียบร้อย! ขยับความสุขขึ้นอีกก้าวครับ ✨');
       setEvaluatingActivityId(null);
       setEvalNotes('');
       setEvalPleasure(5);
@@ -252,7 +252,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
         setActivities(activities.map(x => x.id === id ? { ...x, ...updatedFields } : x));
       }
 
-      toast.success('รับรู้และปล่อยผ่าน ไม่เป็นไรนะ วันพรุ่งนี้เอาใหม่ตามแผนเดิมค่ะ 🤍');
+      toast.success('รับรู้และปล่อยผ่าน ไม่เป็นไรนะ วันพรุ่งนี้เอาใหม่ตามแผนเดิมครับ 🤍');
     } catch (err) {
       toast.error('แก้ไขสถานะไม่สำเร็จ');
     }
@@ -276,7 +276,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
         setActivities(activities.map(x => x.id === id ? { ...x, ...updatedFields } : x));
       }
 
-      toast.success('ย้ายกิจกรรมกลับไปเป็นแผนที่ตั้งใจไว้นะคะ 💡');
+      toast.success('ย้ายกิจกรรมกลับไปเป็นแผนที่ตั้งใจไว้นะครับ 💡');
     } catch (err) {
       toast.error('แก้ไขสถานะไม่สำเร็จ');
     }
@@ -348,7 +348,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
                   className="overflow-hidden space-y-2 pt-2 text-[11px] text-slate-600 font-sans leading-relaxed border-t border-orange-200/50 mt-2"
                 >
                   <p>
-                    <strong>กุญแจสำคัญ (The BA Magic):</strong> พฤติกรรมบำบัดพิสูจน์แล้วว่า หากใช้วิถี <strong>Outside-In (ให้ภายนอกผลักดันภายใน)</strong> คือสลัดความรู้สึกผิดหวังแล้วลงมือขับเคลื่อนร่างกายทีละนิดตาม <strong>"สลัดอารมณ์และลงมือตามแผนการ"</strong> สมองจะตอบรับและกระตุ้นสารสุขแบบป้อนกลับ ช่วยดับความทุกข์ระบมใจได้เร็วกว่าการนอนคิดเฉยๆ เสมอค่ะ
+                    <strong>กุญแจสำคัญ (The BA Magic):</strong> พฤติกรรมบำบัดพิสูจน์แล้วว่า หากใช้วิถี <strong>Outside-In (ให้ภายนอกผลักดันภายใน)</strong> คือสลัดความรู้สึกผิดหวังแล้วลงมือขับเคลื่อนร่างกายทีละนิดตาม <strong>"สลัดอารมณ์และลงมือตามแผนการ"</strong> สมองจะตอบรับและกระตุ้นสารสุขแบบป้อนกลับ ช่วยดับความทุกข์ระบมใจได้เร็วกว่าการนอนคิดเฉยๆ เสมอครับ
                   </p>
                   <p className="p-2 bg-orange-200/30 rounded-xl text-orange-950 font-bold border border-orange-200 flex items-center gap-1">
                     🎯 <span>"ลงมือทำตามเป้าและตามแผนที่ตระเตรียมไว้ อย่าปล่อยให้หัวจิตที่เหนื่อยล้ามาตั้งกฎเกณฑ์"</span>
@@ -415,7 +415,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
                 onClick={() => {
                   const val = (document.getElementById('ba-goal-input') as HTMLInputElement)?.value;
                   if (val?.trim()) saveGoal(val.trim());
-                  else toast.error('เขียนเป้าหมายบำบัดสั้นๆ ก่อนส่งนะคะ');
+                  else toast.error('เขียนเป้าหมายบำบัดสั้นๆ ก่อนส่งนะครับ');
                 }}
                 disabled={isSubmitGoalLoading}
                 className="px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all active:scale-95 flex items-center justify-center cursor-pointer"
@@ -468,7 +468,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
               </div>
             </div>
             <p className="text-[8.5px] text-slate-400 font-sans leading-relaxed pt-1 border-t border-slate-50">
-              *กิจกรรมไหนได้คะแนนสูง ให้รีบทำซ้ำเพื่อขัดขวางอาการซึมเศร้านะคะ
+              *กิจกรรมไหนได้คะแนนสูง ให้รีบทำซ้ำเพื่อขัดขวางอาการซึมเศร้านะครับ
             </p>
           </div>
 
@@ -632,7 +632,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
                   onChange={(e) => setEvalPleasure(parseInt(e.target.value))}
                   className="w-full accent-emerald-500 bg-white h-2 rounded-lg appearance-none cursor-pointer border border-slate-100"
                 />
-                <p className="text-[10px] text-slate-400 font-sans italic">หลังจากเริ่มทำกิจกรรมนี้ คุณมีความเพลิดเพลิน สบายใจ หรือสุขสมาคมขึ้นไหมคะ?</p>
+                <p className="text-[10px] text-slate-400 font-sans italic">หลังจากเริ่มทำกิจกรรมนี้ คุณมีความเพลิดเพลิน สบายใจ หรือสุขสมาคมขึ้นไหมครับ?</p>
               </div>
 
               {/* Slider Mastery */}
@@ -650,7 +650,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
                   onChange={(e) => setEvalMastery(parseInt(e.target.value))}
                   className="w-full accent-indigo-500 bg-white h-2 rounded-lg appearance-none cursor-pointer border border-slate-100"
                 />
-                <p className="text-[10px] text-slate-400 font-sans italic">คุณรู้สึกภูมิใจ ภูมิธรรม หรือรู้สึกได้ก้าวข้ามความเนือยจนเอาชนะแรงเฉื่อยเสร็จสิ้นได้ไหมคะ?</p>
+                <p className="text-[10px] text-slate-400 font-sans italic">คุณรู้สึกภูมิใจ ภูมิธรรม หรือรู้สึกได้ก้าวข้ามความเนือยจนเอาชนะแรงเฉื่อยเสร็จสิ้นได้ไหมครับ?</p>
               </div>
 
               {/* Eval Notes */}
@@ -697,7 +697,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
             <div className="space-y-1">
               <h4 className="font-extrabold text-xs text-slate-850">ยังไม่มีกิจกรรมฟื้นจิตในแผนชาร์จพฤติกรรม</h4>
               <p className="text-[10.5px] text-slate-400 font-sans leading-relaxed max-w-xs mx-auto">
-                อย่าเกรงกลัวที่จะก้าวขาออกมากระตุ้นใจนะคะ คลิกปุ่ม <strong>"เพิ่มกิจกรรม"</strong> มุมขวาบน เพื่อเริ่มหยั่งรากสร้างสิริความสุขกันเถอะค่ะ
+                อย่าเกรงกลัวที่จะก้าวขาออกมากระตุ้นใจนะครับ คลิกปุ่ม <strong>"เพิ่มกิจกรรม"</strong> มุมขวาบน เพื่อเริ่มหยั่งรากสร้างสิริความสุขกันเถอะครับ
               </p>
             </div>
           </div>
@@ -833,7 +833,7 @@ export default function BehaviorActivation({ user, onBackToHome }: BehaviorActiv
           🛡️ สาส์นคำรบจากแพทย์ผู้ดูแลจิตใจ
         </h4>
         <p className="text-[10.5px] text-slate-500 leading-relaxed font-sans">
-          สหายคะ... อาการตื้อซึมมันคือฝนตกชั่วคราว ไม่จำเป็นต้องรอให้อารมณ์ดีแล้วค่อยเดิน แต่ให้ขยับขาเพื่อปูทางให้แดดส่องลงมาแทน (Outside-In) เริ่มต้นตั้งค่ากิจกรรมเล็กมากที่สุดที่คุณแน่ใจว่าทำเสร็จแน่นอน 5 นาทีก็มีความหมายมหาศาลค่ะ 🤍
+          สหายครับ... อาการตื้อซึมมันคือฝนตกชั่วคราว ไม่จำเป็นต้องรอให้อารมณ์ดีแล้วค่อยเดิน แต่ให้ขยับขาเพื่อปูทางให้แดดส่องลงมาแทน (Outside-In) เริ่มต้นตั้งค่ากิจกรรมเล็กมากที่สุดที่คุณแน่ใจว่าทำเสร็จแน่นอน 5 นาทีก็มีความหมายมหาศาลครับ 🤍
         </p>
       </div>
 

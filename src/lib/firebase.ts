@@ -1,5 +1,13 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously } from 'firebase/auth';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInAnonymously,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '@/firebase-applet-config.json';
 
@@ -14,6 +22,29 @@ export const loginWithGoogle = async () => {
     return result.user;
   } catch (error) {
     console.error('Login error:', error);
+    throw error;
+  }
+};
+
+export const loginWithEmail = async (email: string, password: string) => {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+    return result.user;
+  } catch (error) {
+    console.error('Email login error:', error);
+    throw error;
+  }
+};
+
+export const registerWithEmail = async (email: string, password: string, displayName?: string) => {
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    if (displayName && displayName.trim()) {
+      await updateProfile(result.user, { displayName: displayName.trim() });
+    }
+    return result.user;
+  } catch (error) {
+    console.error('Email registration error:', error);
     throw error;
   }
 };

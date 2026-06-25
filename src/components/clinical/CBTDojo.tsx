@@ -157,7 +157,7 @@ export default function CBTDojo({ user, onEmergencyTrigger, onBackToHome }: { us
             <div className="space-y-3 max-w-sm">
               <h3 className="text-2xl font-black text-slate-900 tracking-tight">บันทึกความคิดปรับใจสำเร็จล่ะ! 🧠</h3>
               <p className="text-slate-500 font-sans text-sm leading-relaxed">
-                เยี่ยมยอดมากเลยค่ะที่คุณใช้หลัก CBT คลี่คลายตะกอนอคติความคิดลบจนเสร็จสิ้น ข้อมูลนี้ได้ถูกจัดเก็บเข้าพอร์ตหลัก <strong>My Journey</strong> เป็นสถิติประวัติสุขภาพใจไว้คุยสรุปรับคำแนะแนวจากนักบำบัดกูรูของคุณเรียบร้อยแล้วนะ 🤍
+                เยี่ยมยอดมากเลยครับที่คุณใช้หลัก CBT คลี่คลายตะกอนอคติความคิดลบจนเสร็จสิ้น ข้อมูลนี้ได้ถูกจัดเก็บเข้าพอร์ตหลัก <strong>My Journey</strong> เป็นสถิติประวัติสุขภาพใจไว้คุยสรุปรับคำแนะแนวจากนักบำบัดกูรูของคุณเรียบร้อยแล้วนะ 🤍
               </p>
             </div>
 

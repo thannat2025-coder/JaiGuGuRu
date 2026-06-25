@@ -62,18 +62,18 @@ export default function GeminiApiKeySettings({ user }: GeminiApiKeySettingsProps
       }
     } catch (err: any) {
       console.error("Error storing API Key in Firestore:", err);
-      toast.error('บันทึกคีย์ลงฐานระบบล้มเหลว แต่บันทึกในเครื่องถิ่นแล้วค่ะ');
+      toast.error('บันทึกคีย์ลงฐานระบบล้มเหลว แต่บันทึกในเครื่องถิ่นแล้วครับ');
     }
   };
 
   const handleTestConnection = async () => {
     const trimmedKey = apiKey.trim();
     if (!trimmedKey) {
-      toast.error('กรุณาระบุ API Key ก่อนกดทดสอบค่ะ');
+      toast.error('กรุณาระบุ API Key ก่อนกดทดสอบครับ');
       return;
     }
     if (!trimmedKey.startsWith('AIzaSy')) {
-      toast.error('API Key ของคุณควรขึ้นต้นด้วย AIzaSy ค่ะ');
+      toast.error('API Key ของคุณควรขึ้นต้นด้วย AIzaSy ครับ');
       return;
     }
 
@@ -84,7 +84,7 @@ export default function GeminiApiKeySettings({ user }: GeminiApiKeySettingsProps
       const testAi = new GoogleGenAI({ apiKey: trimmedKey });
       const response = await testAi.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: "สวัสดีค่ะ ตอบสั้นๆ คำเดียวว่า 'ใช้ได้ดี' เพื่อยืนยันว่าเชื่อมต่อสำเร็จ"
+        contents: "สวัสดีครับ ตอบสั้นๆ คำเดียวว่า 'ใช้ได้ดี' เพื่อยืนยันว่าเชื่อมต่อสำเร็จ"
       });
 
       if (response && response.text) {
@@ -128,7 +128,7 @@ export default function GeminiApiKeySettings({ user }: GeminiApiKeySettingsProps
           </h3>
           <p className="text-slate-500 text-xs font-sans leading-relaxed">
             สำหรับนักเรียนแพทย์ นิสิตนักศึกษา หรือบุคคลภายนอกที่โคลนโปรเจกต์นี้ไปใช้บน GitHub <br />
-            กรุณาระบุ <strong>API Key ส่วนตัวของคุณเอง</strong> เพื่อลดความตึงเครียดของโควตาประมวลผลฟรีของแพทย์ระบบส่วนกลางค่ะ
+            กรุณาระบุ <strong>API Key ส่วนตัวของคุณเอง</strong> เพื่อลดความตึงเครียดของโควตาประมวลผลฟรีของแพทย์ระบบส่วนกลางครับ
           </p>
         </div>
       </div>
@@ -184,7 +184,7 @@ export default function GeminiApiKeySettings({ user }: GeminiApiKeySettingsProps
       <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-2.5 text-[10.5px]/relaxed text-slate-500 font-sans">
         <HelpCircle className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
         <div>
-          <span>ไม่มีคีย์ใช่ไหมคะ? คุณสามารถสมัครขอรับคีย์ <strong>Gemini API Key ฟรี (Free Tier 15 RPM)</strong> ได้ง่ายๆ ภายใน 1 นาที เพียงกดปุ่มเข้า </span>
+          <span>ไม่มีคีย์ใช่ไหมครับ? คุณสามารถสมัครขอรับคีย์ <strong>Gemini API Key ฟรี (Free Tier 15 RPM)</strong> ได้ง่ายๆ ภายใน 1 นาที เพียงกดปุ่มเข้า </span>
           <a
             href="https://aistudio.google.com/"
             target="_blank"
@@ -193,7 +193,7 @@ export default function GeminiApiKeySettings({ user }: GeminiApiKeySettingsProps
           >
             Google AI Studio ↗
           </a>
-          <span> แล้วใช้อีเมล Google เดียวกันกดคำว่า "Get API Key" ได้เลยค่ะ!</span>
+          <span> แล้วใช้อีเมล Google เดียวกันกดคำว่า "Get API Key" ได้เลยครับ!</span>
         </div>
       </div>
     </div>

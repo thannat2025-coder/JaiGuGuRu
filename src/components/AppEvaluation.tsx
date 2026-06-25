@@ -141,7 +141,7 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
         parsed.unshift(newFeedback);
         localStorage.setItem('local_feedbacks', JSON.stringify(parsed));
         setSubmitted(true);
-        toast.success('ขอบพระคุณสำหรับความคิดเห็นค่ะ ระบบบันทึกข้อมูลและแสดงผลจำลองเรียบร้อยแล้วค่ะ 🤍');
+        toast.success('ขอบพระคุณสำหรับความคิดเห็นครับ ระบบบันทึกข้อมูลและแสดงผลจำลองเรียบร้อยแล้วครับ 🤍');
         return;
       }
 
@@ -158,7 +158,7 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
       });
 
       setSubmitted(true);
-      toast.success('ขอบพระคุณสำหรับความคิดเห็นค่ะ ระบบส่งต่อข้อมูลไปยัง นพ.ธันวรุจน์ เรียบร้อยแล้วค่ะ 🤍');
+      toast.success('ขอบพระคุณสำหรับความคิดเห็นครับ ระบบส่งต่อข้อมูลไปยัง นพ.ธันวรุจน์ เรียบร้อยแล้วครับ 🤍');
     } catch (err) {
       console.error("Firebase submit error:", err);
       toast.error('ระบบอินเทอร์เน็ตขัดข้อง กรุณาลองใหม่อีกครั้งนะ');
@@ -282,7 +282,7 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
                     rows={4}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="เล่าความรู้สึก ประสบการณ์ หรือเรื่องราวน่าประทับใจที่อยากช่วยย้อนสะท้อนกลับไปแด่วงการผู้สร้างแอปค่ะ..."
+                    placeholder="เล่าความรู้สึก ประสบการณ์ หรือเรื่องราวน่าประทับใจที่อยากช่วยย้อนสะท้อนกลับไปแด่วงการผู้สร้างแอปครับ..."
                     className="w-full p-4 bg-slate-50 text-slate-800 border border-slate-200/80 rounded-2xl text-xs font-sans focus:outline-none focus:ring-2 focus:ring-rose-50 focus:border-rose-500 transition-all placeholder:text-slate-400"
                   />
                 </div>
@@ -315,7 +315,7 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
                 <div className="space-y-2">
                   <h4 className="text-2xl font-black text-slate-900 tracking-tight">ขอบคุณสำหรับความรักและฟีดแบค!</h4>
                   <p className="text-slate-500 text-xs font-sans leading-relaxed">
-                    ผลลัพธ์การวัดระดับความพึงพอใจของคุณได้รับการเข้ารหัสความปลอดภัย และเชื่อมต่อกลับไปจัดสถิติยังแดชบอร์ดสรุปผลของ <strong>นพ.ธันวรุจน์ บูรณสุขสกุล (ผู้สร้างสรรค์หลัก)</strong> บนฐานข้อมูล Firestore เรียบร้อยแล้วค่ะ เพื่อความงอกงามและการช่วยเหลือผู้รับอิทธิพลแห่งทุกข์ใจที่ดีถัดไป 🤍
+                    ผลลัพธ์การวัดระดับความพึงพอใจของคุณได้รับการเข้ารหัสความปลอดภัย และเชื่อมต่อกลับไปจัดสถิติยังแดชบอร์ดสรุปผลของ <strong>นพ.ธันวรุจน์ บูรณสุขสกุล (ผู้สร้างสรรค์หลัก)</strong> บนฐานข้อมูล Firestore เรียบร้อยแล้วครับ เพื่อความงอกงามและการช่วยเหลือผู้รับอิทธิพลแห่งทุกข์ใจที่ดีถัดไป 🤍
                   </p>
                 </div>
 
@@ -343,9 +343,9 @@ export default function AppEvaluation({ user }: AppEvaluationProps) {
               <div className="flex items-center gap-2 bg-rose-500/20 w-fit px-3 py-1 rounded-full text-[10px]/none font-black tracking-widest uppercase text-rose-300">
                 <Flame className="w-3.5 h-3.5" /> creator administration room
               </div>
-              <h3 className="text-lg font-extrabold tracking-tight">ยินดีต้อนรับกลับค่ะ นพ.ธันวรุจน์ บูรณสุขสกุล</h3>
+              <h3 className="text-lg font-extrabold tracking-tight">ยินดีต้อนรับกลับครับ นพ.ธันวรุจน์ บูรณสุขสกุล</h3>
               <p className="text-white/85 text-xs font-sans leading-relaxed">
-                ห้องส่วนตัวบริหารประสิทธิภาพของสถิติใจผู้ใช้ทั้งหมด ระบบรวบรวมฟีดแบคและความพึงพอใจการตอบสนองของวัยรุ่นและผู้เผชิญภัยทั้งหมดที่ใช้แอปฯ จากการดึงคีย์และสถิติ GitHub กลับมาสรุปแบบเรียลไทม์ไว้ในฐานข้อมูล ณ ที่นี้ค่ะ
+                ห้องส่วนตัวบริหารประสิทธิภาพของสถิติใจผู้ใช้ทั้งหมด ระบบรวบรวมฟีดแบคและความพึงพอใจการตอบสนองของวัยรุ่นและผู้เผชิญภัยทั้งหมดที่ใช้แอปฯ จากการดึงคีย์และสถิติ GitHub กลับมาสรุปแบบเรียลไทม์ไว้ในฐานข้อมูล ณ ที่นี้ครับ
               </p>
             </div>
 

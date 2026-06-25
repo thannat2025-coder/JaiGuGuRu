@@ -485,7 +485,7 @@ function MeditationExercise() {
       setIsActive(false);
       setStep(1);
       setSentenceIndex(0);
-      toast.success('การฝึกเจริญสติวิถีบำบัด MBCT สำเร็จลุล่วง จิตระลึกใสพร้อมเผชิญวันใหม่อย่างสุขใจค่ะ 💖');
+      toast.success('การฝึกเจริญสติวิถีบำบัด MBCT สำเร็จลุล่วง จิตระลึกใสพร้อมเผชิญวันใหม่อย่างสุขใจครับ 💖');
     }
   };
 

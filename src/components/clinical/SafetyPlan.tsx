@@ -117,12 +117,12 @@ export default function SafetyPlan({ user, isEmergency, resetEmergency, onBackTo
         parsedLogs.push({
           userId: user.uid,
           type: 'plan-updated',
-          note: `อัปเดตกระดานแผนป้องกันความปลอดภัย: อัปเกรดเกราะป้องกันสำหรับรับมือกับ Triggers ด้วยความรู้สึกมั่นคง สัญญาณความปรองดองพร้อมใช้งานเรียบร้อยค่ะ 🛡️`,
+          note: `อัปเดตกระดานแผนป้องกันความปลอดภัย: อัปเกรดเกราะป้องกันสำหรับรับมือกับ Triggers ด้วยความรู้สึกมั่นคง สัญญาณความปรองดองพร้อมใช้งานเรียบร้อยครับ 🛡️`,
           createdAt: new Date().toISOString()
         });
         localStorage.setItem(`safety_plan_logs_${user.uid}`, JSON.stringify(parsedLogs));
 
-        toast.success('บันทึกแผนป้องกันความปลอดภัยและทำสัญลักษณ์บนปฏิทินสำเร็จแล้วค่ะ 🌟');
+        toast.success('บันทึกแผนป้องกันความปลอดภัยและทำสัญลักษณ์บนปฏิทินสำเร็จแล้วครับ 🌟');
         setIsComplete(true);
         return;
       }
@@ -136,11 +136,11 @@ export default function SafetyPlan({ user, isEmergency, resetEmergency, onBackTo
       await addDoc(collection(db, 'users', user.uid, 'safetyPlanLogs'), {
         userId: user.uid,
         type: 'plan-updated',
-        note: `อัปเดตกระดานแผนป้องกันความปลอดภัย: อัปเกรดเกราะป้องกันสำหรับรับมือกับ Triggers ด้วยความรู้สึกมั่นคง สัญญาณความปรองดองพร้อมใช้งานเรียบร้อยค่ะ 🛡️`,
+        note: `อัปเดตกระดานแผนป้องกันความปลอดภัย: อัปเกรดเกราะป้องกันสำหรับรับมือกับ Triggers ด้วยความรู้สึกมั่นคง สัญญาณความปรองดองพร้อมใช้งานเรียบร้อยครับ 🛡️`,
         createdAt: serverTimestamp()
       });
 
-      toast.success('บันทึกแผนป้องกันความปลอดภัยและทำสัญลักษณ์บนปฏิทินสำเร็จแล้วค่ะ 🌟');
+      toast.success('บันทึกแผนป้องกันความปลอดภัยและทำสัญลักษณ์บนปฏิทินสำเร็จแล้วครับ 🌟');
       setIsComplete(true);
     } catch (error) {
       console.error('Save plan error:', error);
@@ -156,10 +156,10 @@ export default function SafetyPlan({ user, isEmergency, resetEmergency, onBackTo
       link.download = `Coping-Card-${user.displayName?.split(' ')[0] || 'Me'}.png`;
       link.href = dataUrl;
       link.click();
-      toast.success('บันทึก Coping Card เป็นรูปภาพลงโทรศัพท์เรียบร้อยแล้วค่ะ! 💾');
+      toast.success('บันทึก Coping Card เป็นรูปภาพลงโทรศัพท์เรียบร้อยแล้วครับ! 💾');
     } catch (err) {
       console.error(err);
-      toast.error('ไม่สามารถดาวน์โหลดรูปภาพได้ในระบบ Sandbox นี้ แต่คุณสามารถจับหน้าจอเพื่อใช้งานอย่างพกพาสะดวกได้เลยนะคะ 🤍');
+      toast.error('ไม่สามารถดาวน์โหลดรูปภาพได้ในระบบ Sandbox นี้ แต่คุณสามารถจับหน้าจอเพื่อใช้งานอย่างพกพาสะดวกได้เลยนะครับ 🤍');
     }
   };
 
@@ -177,12 +177,12 @@ export default function SafetyPlan({ user, isEmergency, resetEmergency, onBackTo
           text: 'แผนป้องกันความปลอดภัยส่วนบุคคล (SPI) ของฉัน มั่นใจ มั่นคง ปลอดภัย 🛡️'
         });
       } else {
-        await navigator.clipboard.writeText('ฉันได้เก็บบันทึกแผนความปลอดภัย (Coping Card) กับใจกูรูแล้ว หากมีสัญญาณอันตรายโปรดคุ้มครองฉันด้วยนะคะ');
-        toast.success('คัดลอกคำแถลงความปลอดภัยแล้ว! คุณสามารถใช้ภาพที่ดาวน์โหลดส่งให้นักบำบัดทางแชตได้ทันทีค่ะ');
+        await navigator.clipboard.writeText('ฉันได้เก็บบันทึกแผนความปลอดภัย (Coping Card) กับใจกูรูแล้ว หากมีสัญญาณอันตรายโปรดคุ้มครองฉันด้วยนะครับ');
+        toast.success('คัดลอกคำแถลงความปลอดภัยแล้ว! คุณสามารถใช้ภาพที่ดาวน์โหลดส่งให้นักบำบัดทางแชตได้ทันทีครับ');
       }
     } catch (err) {
       console.error(err);
-      toast.error('คุณสามารถแชร์ผ่านการบันทึกรูปภาพและส่งไปที่ห้องแชตของคนที่คุณรู้สึกปลอดภัยได้ทันทีค่ะ');
+      toast.error('คุณสามารถแชร์ผ่านการบันทึกรูปภาพและส่งไปที่ห้องแชตของคนที่คุณรู้สึกปลอดภัยได้ทันทีครับ');
     }
   };
 
@@ -290,7 +290,7 @@ export default function SafetyPlan({ user, isEmergency, resetEmergency, onBackTo
           <div>
             <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">บันทึกและสร้าง Coping Card สำเร็จ! 🛡️</h3>
             <p className="text-slate-500 font-sans text-xs leading-relaxed max-w-sm mt-1">
-              คัมภีร์พิทักษ์ใจของคุณพร้อมใช้งานแล้วค่ะ คุณสามารถพกพาติดตัว ดาวน์โหลดเก็บสิทธิ์ หรือส่งต่อให้คนที่รู้สึกปลอดภัยได้โดยตรงเลยนะคะ
+              คัมภีร์พิทักษ์ใจของคุณพร้อมใช้งานแล้วครับ คุณสามารถพกพาติดตัว ดาวน์โหลดเก็บสิทธิ์ หรือส่งต่อให้คนที่รู้สึกปลอดภัยได้โดยตรงเลยนะครับ
             </p>
           </div>
         </div>

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { db, auth, loginWithGoogle, loginAnonymously } from '@/src/lib/firebase';
+import { db, auth, loginWithGoogle, loginAnonymously, loginWithEmail, registerWithEmail } from '@/src/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { 
@@ -53,6 +53,12 @@ export default function App() {
   const [pendingApiKey, setPendingApiKey] = useState<string | null>(null);
   const [showApiConsent, setShowApiConsent] = useState(false);
 
+  // Email/Password login states
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+
   // Guest restriction helper
   const isVisitor = user?.isAnonymous || user?.uid === 'local_guest' || user?.uid?.startsWith('local_') || !user?.email || user?.email === 'guest@jaiguguru.org';
 
@@ -63,7 +69,7 @@ export default function App() {
 
   const handleTabClick = (tab: Tab) => {
     if (isTabRestricted(tab)) {
-      toast.error('🔒 โหมดผู้เยี่ยมชมจำกัดการเข้าใช้เฉพาะ "เช็คอินอารมณ์" และ "บันทึกแผนปลอดภัย" เท่านั้น กรุณาเข้าสู่ระบบผ่าน Google เพื่อสัมผัสวิถีรักษาจิตด้วย CBT เต็มรูปแบบเชิงรณรงค์ค่ะ 🤍', {
+      toast.error('🔒 โหมดผู้เยี่ยมชมจำกัดการเข้าใช้เฉพาะ "เช็คอินอารมณ์" และ "บันทึกแผนปลอดภัย" เท่านั้น ครับ กรุณาเข้าสู่ระบบผ่าน Google เพื่อสัมผัสวิถีรักษาจิตด้วย CBT เต็มรูปแบบเชิงรณรงค์ครับ 🤍', {
         duration: 6000,
         icon: '🔒'
       });
@@ -77,10 +83,10 @@ export default function App() {
     if (consent && pendingApiKey) {
       window.localStorage.setItem(`custom_gemini_api_key_${user.uid}`, pendingApiKey);
       window.localStorage.setItem(`custom_gemini_api_key_consented_${user.uid}`, 'true');
-      toast.success('🔌 เชื่อมต่อ Google Gemini API Key ของคุณแบบอัตโนมัติเรียบร้อยแล้วค่ะ! 🤍 พร้อมวิเคราะห์จิตใจและทัศนคติลึกซึ้ง');
+      toast.success('🔌 เชื่อมต่อ Google Gemini API Key ของคุณแบบอัตโนมัติเรียบร้อยแล้วครับ! 🤍 พร้อมวิเคราะห์จิตใจและทัศนคติลึกซึ้ง');
     } else {
       window.localStorage.setItem(`custom_gemini_api_key_consented_${user.uid}`, 'false');
-      toast('คุณสลัดสิทธิ์เชื่อมโยงคีย์โดยอัตโนมัติ คุณยังสามารถระบุคีย์ด้วยตนเองได้ในสไลด์เพจข้อมูลส่วนตัวค่ะ', {
+      toast('คุณสลัดสิทธิ์เชื่อมโยงคีย์โดยอัตโนมัติ คุณยังสามารถระบุคีย์ด้วยตนเองได้ในสไลด์เพจข้อมูลส่วนตัวครับ', {
         icon: '🔑'
       });
     }
@@ -157,7 +163,7 @@ export default function App() {
     if (!user) return;
     if (user.uid.startsWith('local_')) {
       setHasConsented(true);
-      toast.success('ยินดีต้อนรับเข้าสู่วิถีบำบัดจิตใจค่ะ 🤍');
+      toast.success('ยินดีต้อนรับเข้าสู่วิถีบำบัดจิตใจครับ 🤍');
       return;
     }
     try {
@@ -169,7 +175,8 @@ export default function App() {
         displayName: user.displayName,
       }, { merge: true });
       setHasConsented(true);
-      toast.success('ขอบคุณมากที่ไว้วางใจ JaiGu (GuRu.D) นะ');
+      setActiveTab('profile'); // Automatically route to profile to authorize/allow API Key
+      toast.success('ขอบคุณมากที่ไว้วางใจ Jai-Gu นะครับ 🤍');
     } catch (error) {
       console.error("Error saving consent:", error);
       toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง');
@@ -191,6 +198,66 @@ export default function App() {
   const [loggingIn, setLoggingIn] = useState(false);
   const [loggingInGuest, setLoggingInGuest] = useState(false);
 
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loggingIn) return;
+    if (!email || !email.trim() || !password) {
+      toast.error('กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วนครับ');
+      return;
+    }
+    if (password.length < 6) {
+      toast.error('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษรเพื่อความปลอดภัยครับ');
+      return;
+    }
+    if (authMode === 'register' && !displayName.trim()) {
+      toast.error('กรุณากรอกชื่อเล่นหรือนามแฝงของคุณเพื่อความเป็นมิตรและจรรยาบรรณครับ');
+      return;
+    }
+
+    setLoggingIn(true);
+    const toastId = toast.loading(authMode === 'login' ? 'กำลังดำเนินการเข้าสู่ระบบ...' : 'กำลังดำเนินการลงทะเบียน...');
+    try {
+      if (authMode === 'login') {
+        const loggedInUser = await loginWithEmail(email, password);
+        toast.success('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับกลับเข้าสู่ Jai-Gu ครับ 🤍', { id: toastId });
+        setActiveTab('profile'); // Direct to profile immediately
+      } else {
+        const registeredUser = await registerWithEmail(email, password, displayName);
+        toast.success('ลงทะเบียนและเริ่มใช้งานสำเร็จ! 🎉', { id: toastId });
+        
+        // Write standard Firestore user document
+        await setDoc(doc(db, 'users', registeredUser.uid), {
+          uid: registeredUser.uid,
+          privacyConsent: true,
+          consentDate: serverTimestamp(),
+          email: registeredUser.email,
+          displayName: displayName,
+        }, { merge: true });
+        
+        setHasConsented(true);
+        setActiveTab('profile'); // Direct to profile to let them authorize API Key immediately
+      }
+    } catch (error: any) {
+      console.error("Authentication error:", error);
+      const errorCode = error?.code || '';
+      if (errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential') {
+        toast.error('❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้งครับ', { id: toastId });
+      } else if (errorCode === 'auth/user-not-found') {
+        toast.error('❌ ไม่พบผู้ใช้ที่มีอีเมลนี้ กรุณาสมัครสมาชิกก่อนใช้นะครับ', { id: toastId });
+      } else if (errorCode === 'auth/email-already-in-use') {
+        toast.error('❌ อีเมลนี้ถูกลงทะเบียนไว้แล้ว กรุณาเข้าสู่ระบบแทนครับ', { id: toastId });
+      } else if (errorCode === 'auth/invalid-email') {
+        toast.error('❌ รูปแบบอีเมลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้งครับ', { id: toastId });
+      } else if (errorCode === 'auth/weak-password') {
+        toast.error('❌ รหัสผ่านคาดเดาง่ายเกินไป กรุณาใช้รหัสอื่นที่มีความปลอดภัยขึ้นครับ', { id: toastId });
+      } else {
+        toast.error(`❌ เกิดข้อผิดพลาด: ${error?.message || 'กรุณาลองใหม่อีกครั้ง'}`, { id: toastId });
+      }
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
   const handleLogin = async () => {
     if (loggingIn) return;
     setLoggingIn(true);
@@ -205,11 +272,11 @@ export default function App() {
 
       if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
         toast.error(
-          '🔒 โดเมน Vercel/GitHub นี้ยังไม่ได้รับอนุญาตในโปรเจกต์ Firebase! ท่านสามารถคลิกเข้าใช้งานแบบผู้เยี่ยมชม (Guest Mode) เพื่อใช้งานทันทีผ่านโหมดจำลองเครื่องถิ่น (Sandbox) ได้ทันทีค่ะ',
+          '🔒 โดเมน Vercel/GitHub นี้ยังไม่ได้รับอนุญาตในโปรเจกต์ Firebase! ท่านสามารถคลิกเข้าใช้งานแบบผู้เยี่ยมชม (Guest Mode) เพื่อใช้งานทันทีผ่านโหมดจำลองเครื่องถิ่น (Sandbox) ได้ทันทีครับ',
           { id: toastId, duration: 15000 }
         );
       } else if (errorCode === 'auth/popup-blocked') {
-        toast.error('🚫 เบราว์เซอร์บล็อกหน้าต่างป๊อปอัพ กรุณาเปิดสิทธิเข้าถึงป๊อปอัพสำหรับหน้านี้แล้วลองอีกครั้งค่ะ', { id: toastId, duration: 6000 });
+        toast.error('🚫 เบราว์เซอร์บล็อกหน้าต่างป๊อปอัพ กรุณาเปิดสิทธิเข้าถึงป๊อปอัพสำหรับหน้านี้แล้วลองอีกครั้งครับ', { id: toastId, duration: 6000 });
       } else if (errorCode === 'auth/cancelled-popup-request' || errorCode === 'auth/popup-closed-by-user') {
         toast.error('⚠️ ยกเลิกกระบวนการเปิดเข้าสู่ระบบแล้ว', { id: toastId, duration: 4000 });
       } else {
@@ -226,7 +293,7 @@ export default function App() {
     const toastId = toast.loading('กำลังเริ่มเชื่อมต่อผู้เข้าใช้งานชั่วคราว...');
     try {
       await loginAnonymously();
-      toast.success('เชื่อมต่อสำเร็จ! ยินดีต้อนรับเข้าสู่วิถีบำบัดจิตใจค่ะ 🤍', { id: toastId });
+      toast.success('เชื่อมต่อสำเร็จ! ยินดีต้อนรับเข้าสู่วิถีบำบัดจิตใจครับ 🤍', { id: toastId });
     } catch (error: any) {
       console.warn("Guest login server error, activating Sandbox Mode:", error);
       // Fallback to local guest user
@@ -244,7 +311,7 @@ export default function App() {
       }
       setUser(localGuest);
       setHasConsented(true); // Auto consent in sandbox mode
-      toast.success('⚠️ เชื่อมต่อโหมดจำลองในเครื่องถิ่น (Sandbox Mode) สำเร็จและทำงานได้ตามปกติแล้วค่ะ!', { id: toastId, duration: 6000 });
+      toast.success('⚠️ เชื่อมต่อโหมดจำลองในเครื่องถิ่น (Sandbox Mode) สำเร็จและทำงานได้ตามปกติแล้วครับ!', { id: toastId, duration: 6000 });
     } finally {
       setLoggingInGuest(false);
     }
@@ -269,38 +336,125 @@ export default function App() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 space-y-8"
+          className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 space-y-6"
         >
           <div className="flex flex-col items-center">
             <BrandLogo size="lg" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">JaiGu (GuRu.D) ใจกุ (กูรู ดี)</h1>
-            <p className="text-slate-500 font-sans font-semibold text-xs leading-relaxed">คำว่า "ใจกุ (กูรู ดี)" ซ่อนความหมายว่า "ใจกู กูรู้ดี" ดึงพลังกลับคืนมาสู่ตัวเอง เพราะ CBT คือการเรียนรู้เพื่อเป็นกูรูเยียวยาตัวเอง 🤍</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Jai-Gu (ใจกุ)</h1>
+            <p className="text-slate-500 font-sans font-semibold text-xs leading-relaxed">ใจกุ เป็นคำซ่อนความหมาย ใจของฉัน ฉันรู้ใจฉันดี เป็นการดึงสติกลับมาสำรวจตนเอง ด้วยเทคนิค CBT เรียนรู้เพื่อเป็นกูรูดูแลใจตนเอง 🤍</p>
           </div>
           
-          <div className="space-y-3">
+          <form onSubmit={handleEmailAuth} className="space-y-4 text-left">
+            <div className="space-y-1">
+              <label className="block text-xs font-black text-slate-700 tracking-wide uppercase">อีเมลผู้ใช้งาน (Email)</label>
+              <input
+                type="email"
+                required
+                placeholder="your.name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-sans text-slate-800"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs font-black text-slate-700 tracking-wide uppercase">รหัสผ่าน (Password)</label>
+              <input
+                type="password"
+                required
+                placeholder="รหัสผ่านอย่างน้อย 6 ตัวอักษร"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-sans text-slate-800"
+              />
+            </div>
+
+            {authMode === 'register' && (
+              <div className="space-y-1">
+                <label className="block text-xs font-black text-slate-700 tracking-wide uppercase">ชื่อเล่น หรือนามแฝง (Alias / Name)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="เช่น สหายผู้เปราะบาง"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all font-sans text-slate-800"
+                />
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loggingIn || loggingInGuest}
+              className="w-full py-3.5 px-6 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all cursor-pointer disabled:opacity-50 active:scale-98 shadow-md shadow-indigo-100/50 mt-2 text-xs"
+            >
+              {loggingIn ? (
+                <span>กำลังดำเนินการ...</span>
+              ) : authMode === 'login' ? (
+                <span>เข้าสู่ระบบผ่าน Email</span>
+              ) : (
+                <span>สมัครสมาชิกผ่าน Email</span>
+              )}
+            </button>
+          </form>
+
+          <div className="flex items-center justify-between text-xs px-2">
+            {authMode === 'login' ? (
+              <>
+                <span className="text-slate-400 font-medium">ยังไม่มีบัญชีใช่ไหมครับ?</span>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('register')}
+                  className="text-indigo-600 font-extrabold hover:underline cursor-pointer"
+                >
+                  สมัครสมาชิก (Sign Up) ↗
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-slate-400 font-medium">มีบัญชีอยู่แล้ว?</span>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('login')}
+                  className="text-indigo-600 font-extrabold hover:underline cursor-pointer"
+                >
+                  เข้าสู่ระบบ (Sign In) ↗
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="relative flex items-center justify-center py-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-100"></div>
+            </div>
+            <span className="relative px-3 bg-white text-[10px] font-bold text-slate-400 uppercase tracking-wider">หรือเชื่อมต่อทางเลือกอื่น</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={handleLogin}
               disabled={loggingIn || loggingInGuest}
-              className="w-full py-4 px-6 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-800 transition-all cursor-pointer disabled:opacity-50 active:scale-98"
+              className="py-3 px-4 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 border border-slate-200 active:scale-98 text-xs"
             >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6 animate-pulse" />
-              {loggingIn ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบด้วย Google'}
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4" />
+              <span>Google</span>
             </button>
 
             <button
               onClick={handleGuestLogin}
               disabled={loggingIn || loggingInGuest}
-              className="w-full py-3.5 px-6 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 border border-slate-200 active:scale-98"
+              className="py-3 px-4 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 border border-slate-200 active:scale-98 text-xs"
             >
-              🔑 เข้าใช้งานด่วนแบบผู้เยี่ยมชม (Guest Mode)
+              <span>🔑 Guest Mode</span>
             </button>
           </div>
 
           <div className="p-4 bg-indigo-50/50 text-indigo-950 font-sans rounded-2xl text-[11.5px] leading-relaxed text-left border border-indigo-100/30 space-y-1">
-            <p className="font-extrabold text-indigo-900 text-xs mb-1">🔑 คำแนะนำสำหรับการใช้อีเมลผู้ใช้งานอื่น:</p>
-            <p className="font-medium">ในกรณีที่คุณเข้าใช้ระบบด้วยชื่ออีเมลทั่วไปหรืออีเมลของผู้อื่น กรุณานำ <strong>Google Gemini API Key ส่วนตัวของคุณเอง</strong> มาวางติดตั้งในหน้าข้อมูลส่วนตัว (แท็บ Profile ขวาล่าง) เพื่อเข้าถึงชุดคำสั่งวิเคราะห์ประมวลความคิดและแอปพลิเคชันอย่างฉลาดและราบรื่นค่ะ</p>
+            <p className="font-extrabold text-indigo-900 text-xs mb-1">🔑 คำแนะนำสำหรับการใช้อีเมลผู้ใช้งาน:</p>
+            <p className="font-medium">หลังจากสมัครสมาชิกหรือเข้าใช้ระบบด้วยชื่ออีเมลของคุณแล้ว กรุณานำ <strong>Google Gemini API Key ส่วนตัวของคุณเอง</strong> มาวางติดตั้งในหน้าข้อมูลส่วนตัว (แท็บ Profile ขวาล่าง) เพื่อเปิดใช้งานชุดคำสั่งประมวลความนึกคิดและจิตใจให้ทำงานอย่างราบรื่นสูงสุดครับ 🤍</p>
           </div>
 
           <div className="space-y-2 pt-2 border-t border-slate-100">
@@ -440,7 +594,7 @@ export default function App() {
                     <p className="text-xl">🔒</p>
                     <h4 className="text-sm font-black text-slate-800">เครื่องมือวิเคราะห์ขั้นสูง (สำหรับสมาชิก)</h4>
                     <p className="text-[11px] text-slate-500 font-sans max-w-[280px] mx-auto leading-relaxed">
-                      ฟีเจอร์ตั้งเวลาเตือนภัย บันทึกคีย์วิเคราะห์ส่วนตัว และเสนอแนะแอปพลิเคชัน ถูกจำกัดไว้เฉพาะสมาชิกที่เข้าสู่ระบบแบบเต็มรูปแบบเท่านั้นค่ะ สำหรับผู้ใช้ทั่วไป แนะนำให้เพลิดเพลินกับการใช้งาน เช็คอินอารมณ์ และบันทึกแผนปลอดภัย ได้อย่างเสรีเลยนะคะ 🤍
+                      ฟีเจอร์ตั้งเวลาเตือนภัย บันทึกคีย์วิเคราะห์ส่วนตัว และเสนอแนะแอปพลิเคชัน ถูกจำกัดไว้เฉพาะสมาชิกที่เข้าสู่ระบบแบบเต็มรูปแบบเท่านั้นครับ สำหรับผู้ใช้ทั่วไป แนะนำให้เพลิดเพลินกับการใช้งาน เช็คอินอารมณ์ และบันทึกแผนปลอดภัย ได้อย่างเสรีเลยนะครับ 🤍
                     </p>
                   </div>
                 ) : (

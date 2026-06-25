@@ -241,7 +241,7 @@ function TemperatureSkill() {
       <div className="space-y-2 max-w-sm">
         <h3 className="text-xl font-black text-slate-900 tracking-tight">น้ำเย็นจัดชูหัวใจ (Temperature TIPP)</h3>
         <p className="text-slate-500 text-xs font-sans leading-relaxed">
-          ใช้ผ้าน้ำเย็นจัดประคบรอบดวงตากลางแก้ม ค่อยๆ กลั้นหายใจล้มหน้าลงไป 30 วินาที เพื่อกระตุ้นระบบประสาทเวกัส (Vagus Nerve) ร่างกายจะหดระบบเผาผลาญลงฉับพลัน ดึงอัตราเต้นหัวใจกลับสู่ความสงบทันทีค่ะ!
+          ใช้ผ้าน้ำเย็นจัดประครอบดวงตากลางแก้ม ค่อยๆ กลั้นหายใจล้มหน้าลงไป 30 วินาที เพื่อกระตุ้นระบบประสาทเวกัส (Vagus Nerve) ร่างกายจะหดระบบเผาผลาญลงฉับพลัน ดึงอัตราเต้นหัวใจกลับสู่ความสงบทันทีครับ!
         </p>
       </div>
       
@@ -274,7 +274,7 @@ function ExerciseSkill() {
       <div className="space-y-2 max-w-sm">
         <h3 className="text-xl font-black text-slate-900 tracking-tight">ระบายเคมีความกังวลออก (Intense Exercise)</h3>
         <p className="text-slate-500 text-xs font-sans leading-relaxed">
-          ความตึงเครียดบางทีคือโมเลกุลพลังงานล้นเหลือที่ติดขัดในกล้ามเนื้อ ลองลุกขึ้นลุยกิจกรรมเหล่านี้อย่างฉับพลันเป็นเวลา 60 วินาทีกระตุ้นเคมีสมองเชิงบวกกันค่ะ!
+          ความตึงเครียดบางทีคือโมเลกุลพลังงานล้นเหลือที่ติดขัดในกล้ามเนื้อ ลองลุกขึ้นลุยกิจกรรมเหล่านี้อย่างฉับพลันเป็นเวลา 60 วินาทีกระตุ้นเคมีสมองเชิงบวกกันครับ!
         </p>
       </div>
 
@@ -436,7 +436,7 @@ function LookSection() {
       <div className="p-3 bg-sky-50 rounded-2xl border border-sky-100 flex items-start gap-2.5 text-[10px]/relaxed text-sky-850">
         <Info className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
         <span className="font-medium">
-          <strong>คำแนะนำสำคัญ:</strong> หากรอบตัวไม่ปลอดภัยอย่างชัดเจน <strong>ห้ามลุยล้นตัวเข้าไปเองเด็ดขาด!</strong> ตั้งสติประคับให้ตนอุ่นใจก่อน แล้วประสานแจ้งหน่วยช่วยเหลือสากลค่ะ
+          <strong>คำแนะนำสำคัญ:</strong> หากรอบตัวไม่ปลอดภัยอย่างชัดเจน <strong>ห้ามลุยล้นตัวเข้าไปเองเด็ดขาด!</strong> ตั้งสติประคับให้ตนอุ่นใจก่อน แล้วประสานแจ้งหน่วยช่วยเหลือสากลครับ
         </span>
       </div>
     </div>

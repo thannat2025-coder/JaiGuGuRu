@@ -302,7 +302,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
         const todayStr = format(new Date(), 'yyyy-MM-dd');
         localStorage.setItem('lastDailySafetyCheckDate', todayStr);
         setShowSafetyCheck(false);
-        toast.success('ยินดีเป็นอย่างยิ่งที่คุณปลอดภัยและก้าวผ่านวันไปได้ด้วยสติและรอยยิ้มนะคะ 🤍');
+        toast.success('ยินดีเป็นอย่างยิ่งที่คุณปลอดภัยและก้าวผ่านวันไปได้ด้วยสติและรอยยิ้มนะครับ 🤍');
         return;
       }
 
@@ -316,10 +316,10 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       localStorage.setItem('lastDailySafetyCheckDate', todayStr);
       setShowSafetyCheck(false);
-      toast.success('ยินดีเป็นอย่างยิ่งที่คุณปลอดภัยและก้าวผ่านวันไปได้ด้วยสติและรอยยิ้มนะคะ 🤍');
+      toast.success('ยินดีเป็นอย่างยิ่งที่คุณปลอดภัยและก้าวผ่านวันไปได้ด้วยสติและรอยยิ้มนะครับ 🤍');
     } catch (err) {
       console.error('Error confirming safety:', err);
-      toast.error('ไม่สามารถบันทึกข้อมูลได้ แต่ส่งใจรักษาอุ่นให้เสมอค่ะ');
+      toast.error('ไม่สามารถบันทึกข้อมูลได้ แต่ส่งใจรักษาอุ่นให้เสมอครับ');
     } finally {
       setSubmittingSafety(false);
     }
@@ -328,7 +328,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
   const handleDisableSafetyCheck = () => {
     localStorage.setItem('disableDailySafetyCheck', 'true');
     setShowSafetyCheck(false);
-    toast.success('ปิดระบบแจ้งเตือนถามความรู้สึกปลอดภัยรายวันแล้วนะคะ (สามารถเปิดได้จากหน้าแผนความปลอดภัย)');
+    toast.success('ปิดระบบแจ้งเตือนถามความรู้สึกปลอดภัยรายวันแล้วนะครับ (สามารถเปิดได้จากหน้าแผนความปลอดภัย)');
   };
 
   const submitMood = async () => {
@@ -471,7 +471,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
                   </div>
                 </div>
                 <div className="space-y-1.5 px-3">
-                  <h3 className="text-xl font-bold">บันทึกอารมณ์สำเร็จเรียบร้อยแล้วค่ะ! 😊</h3>
+                  <h3 className="text-xl font-bold">บันทึกอารมณ์สำเร็จเรียบร้อยแล้วครับ! 😊</h3>
                   <p className="text-white/85 text-xs font-sans leading-relaxed">
                     สภาวะสัมผัสใจของคุณถูกบันทึกร่องรอยไว้ในหน้าปฏิทิน <strong>My Journey</strong> และเตรียมพร้อมสำหรับการดูแลสุขภาพใจของคุณอย่างต่อเนื่อง 🤍
                   </p>
@@ -586,7 +586,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
                   <div className="space-y-4 animate-in fade-in duration-300">
                     <div className="space-y-1">
                       <h3 className="text-xl font-bold">2. พลังงานหรือความตื่นตัวล่ะเป็นอย่างไร? ⚡🌊</h3>
-                      <p className="text-white/70 text-xs">รู้สึกตื่นเต้นกระฉับกระเฉง หรือว่านิ่งเงียบนอนใจดีคะ</p>
+                      <p className="text-white/70 text-xs">รู้สึกตื่นเต้นกระฉับกระเฉง หรือว่านิ่งเงียบนอนใจดีครับ</p>
                     </div>
                     <div className="grid grid-cols-1 gap-2.5">
                       <button
@@ -630,7 +630,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
                   <div className="space-y-4 animate-in fade-in duration-300">
                     <div className="space-y-1">
                       <h3 className="text-lg font-bold">3. อารมณ์ที่ใกล้เคียงที่สุดคือคำไหน? 🎡</h3>
-                      <p className="text-white/70 text-xs">เลือกคำจำกัดความที่สื่อถึงพิกัดความรู้สึกปัจจุบันของคุณได้ตรงใจมากที่สุดนะคะ</p>
+                      <p className="text-white/70 text-xs">เลือกคำจำกัดความที่สื่อถึงพิกัดความรู้สึกปัจจุบันของคุณได้ตรงใจมากที่สุดนะครับ</p>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1 scrollbar-thin text-slate-900">
@@ -771,9 +771,9 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
                 <ShieldAlert className="w-6 h-6" />
               </div>
               <div className="space-y-1 bg-transparent">
-                <h3 className="text-base font-extrabold text-slate-900">เช็คเกราะสติ: วันนี้คุณยังรู้สึก "ปลอดภัย" ดีอยู่ไหมคะ? 🛡️</h3>
+                <h3 className="text-base font-extrabold text-slate-900">เช็คเกราะสติ: วันนี้คุณยังรู้สึก "ปลอดภัย" ดีอยู่ไหมครับ? 🛡️</h3>
                 <p className="text-xs text-slate-500 font-sans leading-relaxed">
-                  ผู้บำบัดอยากชวนคุณมารูดสติเช็คพิกัดความอุ่นใจร่วมกันสั้นๆ เพื่อให้มั่นใจว่าคุณยังคงประคองใจได้อย่างปลอดภัยดีในวันนี้ค่ะ
+                  ผู้บำบัดอยากชวนคุณมารูดสติเช็คพิกัดความอุ่นใจร่วมกันสั้นๆ เพื่อให้มั่นใจว่าคุณยังคงประคองใจได้อย่างปลอดภัยดีในวันนี้ครับ
                 </p>
               </div>
             </div>
@@ -847,7 +847,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
                 "ใจมึง มึงรู้ดีที่สุด! อย่าเกรงใจคนอื่นจนข่มเหงใจตัวเองดิ!",
                 "หายใจยาวๆ สักทีไหมวัยรุ่น? มารดน้ำดอกไม้ในใจกันหน่อย สู้ๆ เว้ย! 🌻",
                 "ความคิดลบอัตโนมัติมันหลอกเราได้ แต่มึงฉลาดพอจะเอามันลงได้ด้วยสติแหละ!",
-                "เก่งพะยะค่ะ! วันนี้รักษาสถิติได้เท่มาก ยืดหยุ่นใจลุยต่อกันเล้ย!"
+                "เก่งพ่ะย่ะค่ะ! วันนี้รักษาสถิติได้เท่มาก ยืดหยุ่นใจลุยต่อกันเล้ย!"
               ];
               const randomQ = cloudQuotes[Math.floor(Math.random() * cloudQuotes.length)];
               toast(randomQ, {
@@ -1033,9 +1033,9 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
                 </div>
               </div>
               <div className="space-y-1.5 px-3">
-                <h3 className="text-xl font-bold">บันทึกอารมณ์สำเร็จเรียบร้อยแล้วค่ะ! 😊</h3>
+                <h3 className="text-xl font-bold">บันทึกอารมณ์สำเร็จเรียบร้อยแล้วครับ! 😊</h3>
                 <p className="text-white/85 text-xs font-sans leading-relaxed">
-                  สภาวะสัมผัสใจของคุณถูกบันทึกร่องรอยไว้ในหน้าปฏิทิน <strong>My Journey</strong> และเตรียมพร้อมส่งออกพอร์ตคุยกับแพทย์บำบัดกูรูเรียบร้อยแล้วนะคะ 🤍
+                  สภาวะสัมผัสใจของคุณถูกบันทึกร่องรอยไว้ในหน้าปฏิทิน <strong>My Journey</strong> และเตรียมพร้อมส่งออกพอร์ตคุยกับแพทย์บำบัดกูรูเรียบร้อยแล้วนะครับ 🤍
                 </p>
               </div>
               <div className="flex flex-col gap-2.5 w-full max-w-[240px] mx-auto pt-3">
@@ -1081,10 +1081,10 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
                   <div className="mt-4 p-4 border border-white/20 bg-white/10 rounded-[2rem] text-left space-y-2.5 max-w-xs mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <div className="flex items-center gap-1.5 text-xs font-black text-amber-300">
                       <Sparkles className="w-4 h-4 text-amber-300" />
-                      <span>ขยับพฤติกรรมกระตุ้นใจกันค่ะ (BA)</span>
+                      <span>ขยับพฤติกรรมกระตุ้นใจกันครับ (BA)</span>
                     </div>
                     <p className="text-[10.5px] text-slate-100 leading-relaxed font-sans font-medium">
-                      สหายคะ... ตรวจพบลมมรสุมใจช่วงหมดไฟ คาดเดาว่าสมองอาจพยายามดึงให้คุณนอนนิ่งๆ พรุ่งนี้เรามาทดลองปูทางให้แดดส่องด้วยวิธี <strong>"ชาร์จพฤติกรรมบำบัด (Outside-In)"</strong> กันนะคะ! ทำเป้าเล็กร่วมกันปราบเศร้ากันค่ะ 🤍
+                      สหายครับ... ตรวจพบลมมรสุมใจช่วงหมดไฟ คาดเดาว่าสมองอาจพยายามดึงให้คุณนอนนิ่งๆ พรุ่งนี้เรามาทดลองปูทางให้แดดส่องด้วยวิธี <strong>"ชาร์จพฤติกรรมบำบัด (Outside-In)"</strong> กันนะครับ! ทำเป้าเล็กร่วมกันปราบเศร้ากันครับ 🤍
                     </p>
                     <button
                       type="button"
@@ -1404,7 +1404,7 @@ export default function Home({ user, setActiveTab, initialShowMoodOnly = false }
           </div>
           
           <p className="text-slate-400 text-sm leading-relaxed max-w-[280px]">
-            JaiGu (ใจกุ กูรูดี) AI พร้อมฟังทุกเรื่องของคุณ ผ่านการฝึกฝนด้วยหลักจิตวิทยา ปลอดภัย และเป็นความลับ 100%
+            Jai-Gu (ใจกุ) AI พร้อมฟังทุกเรื่องของคุณ ผ่านการฝึกฝนด้วยหลักจิตวิทยา ปลอดภัย และเป็นความลับ 100%
           </p>
 
           <button 

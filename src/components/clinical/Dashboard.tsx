@@ -447,7 +447,7 @@ export default function Dashboard({ user }: DashboardProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('ดาวน์โหลดบันทึกรายงานพอร์ตนักบำบัดรุ่นคุ้มครองความลับอัตลักษณ์ (De-identified) เรียบร้อยแล้วค่ะ 📥');
+    toast.success('ดาวน์โหลดบันทึกรายงานพอร์ตนักบำบัดรุ่นคุ้มครองความลับอัตลักษณ์ (De-identified) เรียบร้อยแล้วครับ 📥');
   };
 
   // Process data for Recharts Graph
@@ -796,7 +796,7 @@ export default function Dashboard({ user }: DashboardProps) {
                             {slog.type === 'safe-confirmed' ? 'คงเดิม / สบายดี' : slog.type === 'plan-updated' ? 'อัปเดตกระดานแผน' : 'เช็คสถานะ'}
                           </span>
                         </div>
-                        <p className="text-[11px] font-medium leading-relaxed font-sans">{slog.note || 'ฉันรู้สึกว่าวันนี้ปลอดภัยดีและมีสติมั่นใจในชีวิตค่ะ 🤍'}</p>
+                        <p className="text-[11px] font-medium leading-relaxed font-sans">{slog.note || 'ฉันรู้สึกว่าวันนี้ปลอดภัยดีและมีสติมั่นใจในชีวิตครับ 🤍'}</p>
                       </div>
                     ))}
 
@@ -910,7 +910,7 @@ export default function Dashboard({ user }: DashboardProps) {
           <button
             onClick={() => {
               if (clinicalScreeningsList.length === 0) {
-                toast.error('ผู้เรียนยังไม่มีข้อมูลผลบันทึกเวชระเบียนแบบคัดกรองในขณะนี้ค่ะ ทำประเมินชุดแรกแผ่น Baseline ก่อนจัดส่งค่ะ');
+                toast.error('ผู้เรียนยังไม่มีข้อมูลผลบันทึกเวชระเบียนแบบคัดกรองในขณะนี้ครับ ทำประเมินชุดแรกแผ่น Baseline ก่อนจัดส่งครับ');
                 return;
               }
               
@@ -951,7 +951,7 @@ export default function Dashboard({ user }: DashboardProps) {
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
-              toast.success('ดาวน์โหลดฐานข้อมูลเวชระเบียนคัดกรองคลิกนิกสำเร็จค่ะ 💾');
+              toast.success('ดาวน์โหลดฐานข้อมูลเวชระเบียนคัดกรองคลิกนิกสำเร็จครับ 💾');
             }}
             className="p-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-100 transition-all"
           >
@@ -1023,7 +1023,7 @@ export default function Dashboard({ user }: DashboardProps) {
               <HeartPulse className="w-8 h-8 mx-auto text-slate-400 animate-pulse" />
               <p>ผู้เรียนยังไม่พบบันทึกการคัดกรองสุขภาพ (DASS-21 Thai, PHQ-A, BNSSI-AT) สะสมเป็นระยะประเมินผล</p>
               <p className="text-[10px] text-slate-400 leading-normal max-w-sm mx-auto font-sans">
-                การซ่อมเยียวยาจิตใจและประพฤติ CBT เช้าและเย็น จะช่วยให้คัดกรองอาการดิ่งตกและลดระดับโรคอาการอย่างสม่ำเสมอ เริ่มสอบได้ทางแท็บ "ทำแบบประเมินวิจัย" ได้เลยค่ะค่ะค่ะ
+                การซ่อมเยียวยาจิตใจและประพฤติ CBT เช้าและเย็น จะช่วยให้คัดกรองอาการดิ่งตกและลดระดับโรคอาการอย่างสม่ำเสมอ เริ่มสอบได้ทางแท็บ "ทำแบบประเมินวิจัย" ได้เลยครับ
               </p>
             </div>
           )}
